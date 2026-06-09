@@ -1,0 +1,3106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>SPY WORD Online</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="console.warn('Firebase app not loaded')"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js" onerror="console.warn('Firebase db not loaded')"></script>
+<style>
+:root{--red:#c0392b;--red-light:#e74c3c;--red-dark:#922b21;--red-bg:rgba(192,57,43,0.18);--red-border:rgba(192,57,43,0.5);--blue:#2471a3;--blue-light:#2980b9;--blue-dark:#1a5276;--blue-bg:rgba(36,113,163,0.18);--blue-border:rgba(36,113,163,0.5);--card-face:#e8dfc0;--card-bd:#c4b483;--neutral:#a89060;--assassin:#1c1c1c;--bg:#1a1a2e;--panel:#16213e;--surface:#0f3460;--text:#e0ddd4;--text-dim:#7a8a9a;--gold:#e2a800;--app-w:390px;--r:6px;--font:'Impact','Arial Narrow',Arial,sans-serif;--fontj:-apple-system,'Helvetica Neue',Arial,sans-serif;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;outline:none;}
+select{touch-action:auto;user-select:auto;-webkit-user-select:auto;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;overscroll-behavior:none;}
+body{display:flex;align-items:center;justify-content:center;font-family:var(--fontj);}
+input,textarea{user-select:auto;-webkit-user-select:auto;touch-action:auto;font-size:16px !important;}
+#app{width:var(--app-w);height:100vh;max-height:900px;position:relative;overflow:hidden;background:var(--bg);}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;opacity:0;transition:opacity .2s;}
+.screen.active{display:flex;opacity:1;}
+.btn{min-height:48px;border:none;border-radius:var(--r);font-family:var(--font);font-size:15px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:0 16px;transition:filter .12s,transform .1s;position:relative;overflow:hidden;}
+.btn:active{transform:scale(0.96);filter:brightness(0.85);}
+.btn:disabled{opacity:.38;pointer-events:none;}
+.btn-red{background:var(--red);color:#fff;box-shadow:0 2px 0 var(--red-dark);}
+.btn-blue{background:var(--blue);color:#fff;box-shadow:0 2px 0 var(--blue-dark);}
+.btn-dark{background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.12);}
+.btn-ghost{background:transparent;color:var(--text-dim);border:1px solid rgba(255,255,255,.1);}
+.btn-gold{background:var(--gold);color:#000;box-shadow:0 2px 0 #a07600;}
+.btn-sm{min-height:40px;font-size:13px;}
+.input-field{width:100%;height:46px;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.15);border-radius:var(--r);color:var(--text);font-family:var(--fontj);font-size:15px;padding:0 12px;transition:border-color .15s;}
+.input-field:focus{border-color:var(--gold);}
+.input-field::placeholder{color:var(--text-dim);}
+.lbl{font-family:var(--font);font-size:11px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:5px;display:block;}
+#toasts{position:fixed;bottom:64px;left:50%;transform:translateX(-50%);z-index:10000;pointer-events:none;display:flex;flex-direction:column-reverse;align-items:center;gap:5px;width:var(--app-w);}
+.toast{background:rgba(15,20,30,.95);border:1px solid rgba(255,255,255,.12);border-radius:var(--r);padding:9px 16px;font-size:13px;color:var(--text);animation:tIn .22s ease;font-family:var(--fontj);max-width:88%;}
+.toast.err{border-color:var(--red);color:#f1948a;}
+.toast.ok{border-color:#2ecc71;color:#82e0aa;}
+@keyframes tIn{from{opacity:0;transform:translateY(6px)}
+to{opacity:1;transform:none}
+}
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:5000;display:none;align-items:flex-end;justify-content:center;}
+.modal-ov.open{display:flex;}
+.modal-sheet{background:var(--panel);border-top:2px solid rgba(255,255,255,.08);border-radius:16px 16px 0 0;width:var(--app-w);max-height:88vh;padding:0 16px 28px;display:flex;flex-direction:column;animation:sheetUp .28s cubic-bezier(.34,1.4,.64,1);}
+@keyframes sheetUp{from{transform:translateY(100%)}
+to{transform:none}
+}
+.modal-bar{width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:10px auto 14px;}
+.modal-ttl{font-family:var(--font);font-size:17px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text);margin-bottom:14px;text-align:center;}
+.modal-body{overflow-y:auto;flex:1;touch-action:pan-y;}
+.modal-body::-webkit-scrollbar{display:none;}
+.tog-wrap{position:relative;width:44px;height:22px;}
+.tog-wrap input{display:none;}
+.tog-track{position:absolute;inset:0;border-radius:11px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.12);cursor:pointer;transition:all .2s;}
+.tog-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--text-dim);transition:all .2s;}
+.tog-wrap input:checked~.tog-track{background:var(--gold);border-color:var(--gold);}
+.tog-wrap input:checked~.tog-track .tog-thumb{left:23px;background:#000;}
+.stepper{display:flex;align-items:center;gap:8px;}
+.step-btn{width:30px;height:30px;border-radius:var(--r);border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.04);color:var(--text);font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .1s;}
+.step-btn:active{transform:scale(.88);background:rgba(255,255,255,.1);}
+.step-val{font-family:var(--font);font-size:18px;font-weight:600;min-width:30px;text-align:center;color:var(--text);}
+.srow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.srow:last-child{border-bottom:none;}
+.srow-lbl{font-size:14px;color:var(--text);}
+.srow-sub{font-size:10px;color:var(--text-dim);margin-top:2px;}
+.ssec{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.06);border-radius:var(--r);padding:12px;margin-bottom:10px;}
+.ssec-ttl{font-family:var(--font);font-size:10px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:10px;}
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
+.scroll-area::-webkit-scrollbar{display:none;}
+.spin{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.12);border-top-color:var(--gold);animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}
+}
+#screen-loading{background:var(--bg);align-items:center;justify-content:center;gap:22px;}
+.load-logo{font-family:var(--font);font-size:36px;letter-spacing:6px;color:var(--text);}
+.load-logo em{color:var(--gold);font-style:normal;}
+.load-sub{font-family:var(--font);font-size:10px;letter-spacing:4px;color:var(--text-dim);text-transform:uppercase;}
+#screen-title{background:var(--bg);overflow:hidden;}
+.title-deco{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.title-deco::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:var(--red);}
+.title-deco::after{content:'';position:absolute;bottom:0;left:0;right:0;height:5px;background:var(--blue);}
+.title-splash{position:absolute;width:250px;height:250px;border-radius:50%;filter:blur(90px);opacity:.1;}
+.title-splash.r{background:var(--red);top:-60px;right:-50px;}
+.title-splash.b{background:var(--blue);bottom:80px;left:-60px;}
+.title-body{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 24px;}
+.logo-block{width:100%;margin-bottom:6px;background:#0d1520;padding:14px 0 11px;text-align:center;}
+.logo-main{font-family:var(--font);font-size:50px;font-weight:700;letter-spacing:7px;color:#fff;text-shadow:0 0 30px rgba(192,57,43,.35);}
+.logo-byline{font-family:var(--font);font-size:10px;letter-spacing:4px;color:rgba(255,255,255,.3);text-transform:uppercase;margin-top:3px;}
+.team-bar{display:flex;width:100%;margin-bottom:22px;overflow:hidden;border-radius:3px;}
+.team-bar-r{flex:1;background:var(--red);padding:7px 0;text-align:center;font-family:var(--font);font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.8);text-transform:uppercase;}
+.team-bar-b{flex:1;background:var(--blue);padding:7px 0;text-align:center;font-family:var(--font);font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.8);text-transform:uppercase;}
+.title-nick{width:100%;margin-bottom:18px;}
+.title-btns{width:100%;display:flex;flex-direction:column;gap:9px;margin-bottom:20px;}
+.title-foot{font-family:var(--font);font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.15);text-transform:uppercase;}
+.screen-hdr{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;min-height:50px;background:var(--panel);}
+.screen-hdr h2{font-family:var(--font);font-size:15px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text);}
+.back-btn{width:32px;height:32px;border-radius:var(--r);border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.back-btn:active{background:rgba(255,255,255,.1);}
+.create-foot{padding:12px 16px 26px;flex-shrink:0;}
+.join-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 24px;gap:20px;width:100%;}
+.pin-disp{width:100%;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:16px;text-align:center;}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:8px;}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.2);background:transparent;transition:all .2s;}
+.pin-dot.filled{background:var(--gold);border-color:var(--gold);box-shadow:0 0 7px rgba(226,168,0,.5);}
+.pin-val{font-family:var(--font);font-size:36px;letter-spacing:10px;color:var(--gold);min-height:44px;}
+.pinpad{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+.pkey{height:54px;border-radius:var(--r);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.07);color:var(--text);font-family:var(--font);font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .1s;}
+.pkey:active{transform:scale(.91);background:rgba(255,255,255,.13);}
+.pkey.del{font-size:15px;color:var(--text-dim);}
+.pkey.empty{pointer-events:none;opacity:0;}
+.join-foot{padding:10px 24px 26px;width:100%;}
+.room-item{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.06);border-radius:var(--r);padding:13px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .12s;}
+.room-item:active{transform:scale(.98);background:rgba(255,255,255,.04);}
+.room-item h3{font-family:var(--font);font-size:14px;letter-spacing:1px;color:var(--text);}
+.room-meta{font-size:11px;color:var(--text-dim);margin-top:2px;}
+.room-badge{font-family:var(--font);font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:3px;background:rgba(36,113,163,.2);border:1px solid rgba(36,113,163,.4);color:var(--blue-light);text-transform:uppercase;}
+.room-badge.full{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--text-dim);}
+.empty-state{text-align:center;padding:50px 20px;color:var(--text-dim);}
+.empty-state .ei{font-size:40px;margin-bottom:10px;opacity:.3;}
+#screen-lobby{background:var(--bg);}
+.lobby-hdr{padding:11px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid rgba(0,0,0,.4);flex-shrink:0;background:var(--panel);}
+.rid-wrap{display:flex;align-items:center;gap:10px;}
+.rid-lbl{font-family:var(--font);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;}
+.rid-val{font-family:var(--font);font-size:30px;letter-spacing:6px;color:var(--gold);}
+.copy-btn{padding:3px 8px;border-radius:3px;background:rgba(226,168,0,.1);border:1px solid rgba(226,168,0,.3);color:var(--gold);font-family:var(--font);font-size:9px;letter-spacing:1px;cursor:pointer;text-transform:uppercase;}
+.copy-btn:active{background:rgba(226,168,0,.2);}
+.gear-btn{width:30px;height:30px;border-radius:var(--r);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;color:rgba(255,255,255,.5);}
+.lobby-teams{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:9px 12px;flex-shrink:0;}
+.tcol{background:rgba(0,0,0,.22);border-radius:var(--r);overflow:hidden;}
+.thdr{padding:7px 9px;display:flex;align-items:center;justify-content:space-between;}
+.thdr.red{background:rgba(192,57,43,.22);border-bottom:2px solid var(--red);}
+.thdr.blue{background:rgba(36,113,163,.22);border-bottom:2px solid var(--blue);}
+.tname{font-family:var(--font);font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;}
+.thdr.red .tname{color:#f1948a;}
+.thdr.blue .tname{color:#7fb3d3;}
+.tcnt{font-size:10px;color:var(--text-dim);}
+.tplayers{padding:6px;min-height:68px;}
+.pchip{display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:4px;margin-bottom:3px;background:rgba(255,255,255,.03);}
+.pava{width:24px;height:24px;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:11px;font-weight:700;}
+.pava.red{background:var(--red-dark);color:#f1948a;}
+.pava.blue{background:var(--blue-dark);color:#7fb3d3;}
+.pava.none{background:rgba(255,255,255,.06);color:var(--text-dim);}
+.pname{font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
+.prole{font-family:var(--font);font-size:8px;letter-spacing:.5px;padding:2px 4px;border-radius:3px;background:rgba(255,255,255,.06);color:var(--text-dim);text-transform:uppercase;}
+.prole.spy{background:rgba(226,168,0,.15);color:var(--gold);}
+.p-online-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;border:1.5px solid rgba(0,0,0,.3);}
+.p-online-dot.on{background:#2ecc71;box-shadow:0 0 4px rgba(46,204,113,.6);}
+.p-online-dot.off{background:#e74c3c;box-shadow:0 0 4px rgba(231,76,60,.5);}
+.pcrown{font-size:10px;}
+.unass-area{padding:5px 12px;flex-shrink:0;}
+.unass-lbl{font-family:var(--font);font-size:9px;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;margin-bottom:5px;}
+.unass-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.chat-prev{padding:7px 12px;border-top:1px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:7px;flex-shrink:0;min-height:36px;cursor:pointer;background:rgba(0,0,0,.15);}
+.chat-prev-txt{flex:1;font-size:11px;color:rgba(255,255,255,.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lobby-foot{padding:8px 12px 22px;flex-shrink:0;border-top:1px solid rgba(0,0,0,.4);background:var(--panel);display:flex;flex-direction:column;gap:7px;}
+.lf-row{display:flex;gap:7px;}
+.team-btn{flex:1;min-height:40px;border-radius:var(--r);border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:var(--text-dim);font-family:var(--font);font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;gap:4px;}
+.team-btn:active{transform:scale(.95);}
+.team-btn.red.on{background:var(--red-bg);border-color:var(--red);color:#f1948a;}
+.team-btn.blue.on{background:var(--blue-bg);border-color:var(--blue);color:#7fb3d3;}
+#cd-ov{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.93);display:none;align-items:center;justify-content:center;flex-direction:column;}
+#cd-ov.on{display:flex;}
+#cd-num{font-family:var(--font);font-size:180px;font-weight:700;line-height:1;animation:cdPop .88s ease forwards;}
+#cd-num.red{color:var(--red);text-shadow:0 0 60px rgba(192,57,43,.6);}
+#cd-num.blue{color:var(--blue);text-shadow:0 0 60px rgba(36,113,163,.6);}
+#cd-num.go{color:var(--gold);font-size:100px;text-shadow:0 0 60px rgba(226,168,0,.6);}
+@keyframes cdPop{0%{transform:scale(2);opacity:0;}
+35%{transform:scale(1);opacity:1;}
+75%{transform:scale(1);opacity:1;}
+100%{transform:scale(.7);opacity:0;}
+}
+#screen-game{background:var(--bg);background-image:radial-gradient(ellipse at 50% 50%,#1e2d3d 0%,#0f1a26 100%);display:flex;flex-direction:column;border:3px solid transparent;transition:border-color .4s ease;}
+#screen-game.turn-red{border-color:var(--red);}
+#screen-game.turn-blue{border-color:var(--blue);}
+.g-scorebar{display:flex;flex-shrink:0;height:56px;position:relative;}
+.sc-block{flex:.7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;overflow:hidden;}
+.sc-block.red{background:var(--red);}
+.sc-block.blue{background:var(--blue);}
+.sc-block::after{content:'';position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid transparent;z-index:2;}
+.sc-block.red.turn::after{border-top-color:var(--red);}
+.sc-block.blue.turn::after{border-top-color:var(--blue);}
+.sc-block.first::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.8) 0 6px,transparent 6px 12px);}
+.sc-num{font-family:var(--font);font-size:26px;font-weight:700;line-height:1;color:#fff;}
+.sc-lbl{font-family:var(--font);font-size:8px;letter-spacing:2px;color:rgba(255,255,255,.6);text-transform:uppercase;}
+.sc-center{width:110px;flex-shrink:0;background:#0a1520;border-left:2px solid rgba(0,0,0,.5);border-right:2px solid rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:4px 2px;}
+.g-timer{font-family:var(--font);font-size:17px;font-weight:600;color:var(--gold);line-height:1;}
+.g-timer.warn{color:#e74c3c;animation:blink .5s infinite;}
+@keyframes blink{0%,100%{opacity:1}
+50%{opacity:.25}
+}
+.g-gear{width:20px;height:20px;border-radius:3px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;color:rgba(255,255,255,.4);}
+.g-rolebar{display:flex;align-items:center;justify-content:space-between;padding:3px 10px;flex-shrink:0;background:#08111c;border-bottom:1px solid rgba(0,0,0,.4);min-height:22px;}
+.g-role{font-family:var(--font);font-size:8px;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:1px 6px;border-radius:3px;}
+.g-role.spy-red{background:rgba(192,57,43,.3);color:#f1948a;border:1px solid rgba(192,57,43,.5);}
+.g-role.spy-blue{background:rgba(36,113,163,.3);color:#7fb3d3;border:1px solid rgba(36,113,163,.5);}
+.g-role.op-red{background:rgba(192,57,43,.12);color:#e87c7c;border:1px solid rgba(192,57,43,.25);}
+.g-role.op-blue{background:rgba(36,113,163,.12);color:#7fb3d3;border:1px solid rgba(36,113,163,.25);}
+.g-role.spec{background:rgba(255,255,255,.04);color:var(--text-dim);}
+.g-typing{font-size:8px;color:var(--text-dim);font-style:italic;font-family:var(--fontj);}
+.g-grid-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:6px 6px 4px;overflow:hidden;min-height:0;}
+.g-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;width:100%;align-content:center;}
+.crd{aspect-ratio:1.6/1;border-radius:4px;cursor:pointer;transition:transform .1s;position:relative;}
+.crd:active:not(.rev){transform:scale(.91);}
+.crd.selected .crd-inner{outline:2.5px solid #fff;outline-offset:1px;box-shadow:0 0 0 3px rgba(255,255,255,.35),0 3px 10px rgba(0,0,0,.5);}
+.crd.selected-both{position:relative;z-index:6;}
+.crd.selected-both .crd-inner{outline:3px solid #fff;outline-offset:1px;box-shadow:0 0 0 5px var(--gold),0 3px 14px rgba(0,0,0,.6);}
+.crd.selected-other{position:relative;z-index:5;}
+.crd.selected-other .crd-inner{outline:3px solid var(--gold);outline-offset:1px;box-shadow:0 0 0 4px rgba(226,168,0,.45),0 3px 14px rgba(0,0,0,.6);animation:otherSel 1s ease-in-out infinite;}
+@keyframes otherSel{0%,100%{outline-color:var(--gold);box-shadow:0 0 0 3px rgba(226,168,0,.4);}
+50%{outline-color:#ffe066;box-shadow:0 0 0 6px rgba(226,168,0,.65);}
+}
+.crd-names{position:absolute;bottom:2px;left:2px;right:2px;display:flex;flex-wrap:nowrap;gap:2px;justify-content:center;z-index:30;pointer-events:none;overflow:hidden;}
+.crd-name-tag{background:#fff;color:#111;font-family:var(--font);font-size:6.5px;font-weight:700;letter-spacing:.1px;text-transform:uppercase;padding:1px 3px;border-radius:2px;white-space:nowrap;max-width:44px;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 2px rgba(0,0,0,.35);line-height:1.4;flex-shrink:1;min-width:0;}
+.crd-inner{position:absolute;inset:0;border-radius:4px;display:flex;align-items:center;justify-content:center;padding:3px;overflow:hidden;background:var(--card-face);border:2px solid var(--card-bd);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 4px rgba(0,0,0,.4);transition:background .22s ease,border-color .22s ease,box-shadow .2s ease;}
+.crd-inner::before{content:'';position:absolute;top:0;left:0;right:0;height:42%;background:linear-gradient(180deg,rgba(255,255,255,.24) 0,transparent 100%);border-radius:3px 3px 0 0;pointer-events:none;transition:opacity .22s;}
+.crd.rev .crd-inner::before{opacity:0;}
+.crd.hint-red:not(.rev) .crd-inner{border:3px solid var(--red);background:#fff2f0;}
+.crd.hint-blue:not(.rev) .crd-inner{border:3px solid var(--blue);background:#eff4ff;}
+.crd.hint-neut:not(.rev) .crd-inner{border:2px solid #b8a870;}
+.crd.hint-ass:not(.rev) .crd-inner{border:3px solid #222;background:#1a1a1a;}
+.crd.hint-ass:not(.rev) .crd-w{color:#aaa;}
+.crd.rev.t-red .crd-inner{background:var(--red);border-color:var(--red-dark);box-shadow:inset 0 1px 0 rgba(255,255,255,.13);}
+.crd.rev.t-blue .crd-inner{background:var(--blue);border-color:var(--blue-dark);box-shadow:inset 0 1px 0 rgba(255,255,255,.13);}
+.crd.rev.t-neut .crd-inner{background:var(--neutral);border-color:#7a6840;}
+.crd.rev.t-ass .crd-inner{background:#080808;border-color:#000;box-shadow:none;}
+.crd.rev.t-ass .crd-inner::after{content:'✕';position:absolute;font-size:20px;color:rgba(255,255,255,.18);font-weight:900;font-family:var(--font);}
+.crd-w{font-family:var(--font);font-size:clamp(12px,3.6vw,16px);font-weight:600;text-align:center;color:#1a1008;word-break:break-word;line-height:1.15;letter-spacing:0;text-transform:uppercase;position:relative;z-index:1;transition:color .22s;}
+.crd.rev.t-red .crd-w{color:rgba(255,255,255,.93);}
+.crd.rev.t-blue .crd-w{color:rgba(255,255,255,.93);}
+.crd.rev.t-neut .crd-w{color:rgba(50,30,5,.62);}
+.crd.rev.t-ass .crd-w{color:rgba(255,255,255,.82);}
+.g-hintbar{padding:5px 10px;background:#08111c;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;min-height:38px;border-top:1px solid rgba(0,0,0,.5);}
+.g-hinfo{display:flex;align-items:center;gap:6px;flex:1;min-width:0;}
+.g-hw{font-family:var(--font);font-size:20px;font-weight:700;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.g-hcnt{padding:1px 8px;border-radius:3px;font-family:var(--font);font-size:17px;font-weight:700;flex-shrink:0;}
+.g-hcnt.red{background:var(--red);color:#fff;}
+.g-hcnt.blue{background:var(--blue);color:#fff;}
+.g-hleft{font-size:9px;color:rgba(255,255,255,.3);font-family:var(--font);letter-spacing:.5px;flex-shrink:0;}
+.g-hwait{font-size:10px;color:rgba(255,255,255,.3);font-style:italic;}
+.g-actionbar{padding:5px 9px 10px;flex-shrink:0;display:flex;gap:6px;background:#08111c;}
+.g-hintinput{padding:5px 9px 10px;flex-shrink:0;background:#08111c;border-top:1px solid rgba(255,255,255,.04);}
+.g-hinrow{display:flex;gap:5px;}
+.g-hw-in{flex:1;height:38px;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.14);border-radius:var(--r);color:var(--text);font-family:var(--font);font-size:13px;font-weight:600;letter-spacing:1px;padding:0 9px;}
+.g-hw-in:focus{border-color:var(--gold);}
+.g-hw-in::placeholder{color:rgba(255,255,255,.22);letter-spacing:0;font-weight:400;}
+.g-hnum-sel{width:44px;height:38px;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.14);border-radius:var(--r);color:var(--text);font-family:var(--font);font-size:15px;text-align:center;text-align-last:center;cursor:pointer;appearance:none;-webkit-appearance:none;padding:0;}
+.g-hsub{height:38px;padding:0 12px;border-radius:var(--r);border:none;font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;white-space:nowrap;}
+.g-hsub:active{transform:scale(.94);filter:brightness(.85);}
+.g-hsub.red{background:var(--red);color:#fff;}
+.g-hsub.blue{background:var(--blue);color:#fff;}
+#screen-result{background:var(--bg);align-items:center;}
+.res-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 22px;gap:18px;width:100%;}
+.res-badge{font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;padding:4px 16px;border-radius:3px;}
+.res-badge.red{background:rgba(192,57,43,.2);color:#f1948a;border:1.5px solid var(--red);}
+.res-badge.blue{background:rgba(36,113,163,.2);color:#7fb3d3;border:1.5px solid var(--blue);}
+.res-name{font-family:var(--font);font-size:52px;font-weight:700;letter-spacing:3px;text-align:center;}
+.res-name.red{color:var(--red-light);text-shadow:0 0 40px rgba(192,57,43,.5);}
+.res-name.blue{color:var(--blue-light);text-shadow:0 0 40px rgba(36,113,163,.5);}
+.res-reason{font-size:13px;color:var(--text-dim);text-align:center;}
+.res-stats{width:100%;background:rgba(0,0,0,.25);border-radius:var(--r);border:1px solid rgba(255,255,255,.06);overflow:hidden;}
+.res-srow{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.04);}
+.res-srow:last-child{border-bottom:none;}
+.res-slbl{font-size:12px;color:var(--text-dim);}
+.res-sval{font-family:var(--font);font-size:15px;font-weight:600;color:var(--text);}
+.res-foot{padding:0 22px 26px;width:100%;display:flex;flex-direction:column;gap:7px;flex-shrink:0;}
+.chat-msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px;max-height:40vh;padding-bottom:8px;}
+.chat-msgs::-webkit-scrollbar{display:none;}
+.cbub{max-width:80%;padding:6px 11px;border-radius:12px;font-size:13px;line-height:1.4;}
+.cbub.me{background:var(--blue-dark);align-self:flex-end;color:#fff;border-bottom-right-radius:3px;}
+.cbub.them{background:rgba(255,255,255,.06);align-self:flex-start;color:var(--text);border-bottom-left-radius:3px;}
+.cbub.sys{background:transparent;align-self:center;color:var(--text-dim);font-size:10px;border-radius:0;}
+.csender{font-size:9px;color:var(--text-dim);margin-bottom:2px;font-family:var(--font);letter-spacing:.5px;text-transform:uppercase;}
+.chat-row{display:flex;gap:6px;align-items:center;margin-top:9px;}
+.chat-in{flex:1;height:40px;background:rgba(0,0,0,.3);border:1.5px solid rgba(255,255,255,.1);border-radius:20px;color:var(--text);font-size:16px;padding:0 13px;}
+.chat-send{width:40px;height:40px;border-radius:50%;background:var(--blue);border:none;color:#fff;font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.cfetti{position:fixed;top:-10px;border-radius:2px;animation:cfall linear forwards;pointer-events:none;z-index:9000;}
+@keyframes cfall{to{transform:translateY(110vh) rotate(720deg);opacity:0}
+}
+#ass-ov{position:fixed;inset:0;z-index:7000;pointer-events:none;}
+#ass-ov.flash{animation:assFlash 1.2s ease forwards;}
+@keyframes assFlash{0%{background:rgba(0,0,0,0)}
+20%{background:rgba(192,57,43,.75)}
+55%{background:rgba(0,0,0,.6)}
+100%{background:rgba(0,0,0,0)}
+}
+#combo{position:fixed;top:28%;left:50%;transform:translateX(-50%);z-index:8500;font-family:var(--font);font-size:36px;font-weight:700;pointer-events:none;opacity:0;}
+#combo.show{animation:comboF 1.2s ease forwards;}
+@keyframes comboF{0%{opacity:0;transform:translateX(-50%) scale(.5)}
+30%{opacity:1;transform:translateX(-50%) translateY(-18px) scale(1.1)}
+70%{opacity:1;transform:translateX(-50%) translateY(-28px)}
+100%{opacity:0;transform:translateX(-50%) translateY(-55px) scale(.8)}
+}
+.card-popup-ov{position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;}
+.card-popup-ov.open{display:flex;}
+.card-popup{background:#0f1e2e;border:1.5px solid rgba(255,255,255,.15);border-radius:14px;padding:22px 18px 16px;width:270px;display:flex;flex-direction:column;gap:10px;animation:popIn .18s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{transform:scale(.82);opacity:0}
+to{transform:scale(1);opacity:1}
+}
+.popup-word{font-family:var(--font);font-size:24px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center;color:var(--text);padding:8px 0 12px;border-bottom:1px solid rgba(255,255,255,.08);}
+.popup-guess-btn{height:50px;border-radius:var(--r);border:none;font-family:var(--font);font-size:15px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .12s;}
+.popup-guess-btn:active{transform:scale(.95);filter:brightness(.85);}
+.popup-guess-btn.red{background:var(--red);color:#fff;}
+.popup-guess-btn.blue{background:var(--blue);color:#fff;}
+.popup-desel-btn{height:44px;border-radius:var(--r);border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:var(--text-dim);font-family:var(--font);font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .12s;}
+.popup-desel-btn:active{transform:scale(.95);}
+.popup-close-btn{height:36px;border:none;background:transparent;color:rgba(255,255,255,.25);font-family:var(--font);font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .12s;}
+.popup-close-btn:active{color:rgba(255,255,255,.6);}
+.g-switchbar{flex-shrink:0;background:#060f1a;border-top:1px solid rgba(255,255,255,.05);padding:5px 8px 8px;display:flex;gap:5px;align-items:center;}
+.g-switch-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;flex:1;}
+.g-sw-btn{height:34px;border-radius:var(--r);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4);font-family:var(--font);font-size:9px;font-weight:600;letter-spacing:.5px;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;line-height:1.2;}
+.g-sw-btn:active{transform:scale(.92);}
+.g-sw-btn.red-role.active-role{background:rgba(192,57,43,.22);border-color:var(--red);color:#f1948a;font-weight:700;}
+.g-sw-btn.blue-role.active-role{background:rgba(36,113,163,.22);border-color:var(--blue);color:#7fb3d3;font-weight:700;}
+.g-endturn-solo{height:34px;padding:0 9px;border-radius:var(--r);border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:var(--text);font-family:var(--font);font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .12s;}
+.g-endturn-solo:active{transform:scale(.94);filter:brightness(.85);}
+.g-endturn-solo.active{background:rgba(226,168,0,.15);border-color:var(--gold);color:var(--gold);}
+.help-btns{position:absolute;bottom:10px;right:10px;display:flex;gap:6px;z-index:100;}
+.help-btn{height:32px;padding:0 10px;border-radius:20px;font-family:var(--font);font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .12s;border:none;display:flex;align-items:center;gap:4px;}
+.help-btn:active{transform:scale(.93);}
+.help-btn.rules-btn{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.15);}
+.help-btn.tut-btn{background:rgba(226,168,0,.15);color:var(--gold);border:1px solid rgba(226,168,0,.3);}
+.help-btn.rules-btn:hover{background:rgba(255,255,255,.15);}
+.help-btn.tut-btn:hover{background:rgba(226,168,0,.25);}
+.g-chat-prev{flex-shrink:0;background:#060f1a;border-top:1px solid rgba(255,255,255,.05);padding:5px 8px;display:flex;align-items:center;gap:7px;min-height:34px;cursor:pointer;}
+.g-chat-prev-txt{flex:1;font-size:10px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.g-chat-open-btn{font-family:var(--font);font-size:9px;letter-spacing:.5px;color:var(--text-dim);padding:2px 7px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);flex-shrink:0;}
+.rules-modal-body{padding:0 2px;}
+.rule-cards-row{display:flex;gap:5px;margin:12px 0;justify-content:center;}
+.rule-card{flex:1;max-width:58px;aspect-ratio:1.6/1;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px;position:relative;overflow:hidden;gap:2px;}
+.rule-card.c-hidden{background:#e8dfc0;border:2px solid #c4b483;box-shadow:inset 0 1px 0 rgba(255,255,255,.5);}
+.rule-card.c-red{background:var(--red);border:2px solid var(--red-dark);}
+.rule-card.c-blue{background:var(--blue);border:2px solid var(--blue-dark);}
+.rule-card.c-neutral{background:#a89060;border:2px solid #7a6840;}
+.rule-card.c-black{background:#080808;border:2px solid #000;}
+.rule-card-label{font-family:var(--font);font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;text-align:center;line-height:1.2;}
+.rule-card.c-hidden .rule-card-label{color:#1a1008;}
+.rule-card.c-red .rule-card-label{color:rgba(255,255,255,.92);}
+.rule-card.c-blue .rule-card-label{color:rgba(255,255,255,.92);}
+.rule-card.c-neutral .rule-card-label{color:rgba(50,30,5,.7);}
+.rule-card.c-black .rule-card-label{color:rgba(255,255,255,.5);}
+.rule-card-effect{font-size:7px;text-align:center;line-height:1.2;font-family:var(--fontj);}
+.rule-card.c-hidden .rule-card-effect{color:#555;}
+.rule-card.c-red .rule-card-effect{color:rgba(255,255,255,.7);}
+.rule-card.c-blue .rule-card-effect{color:rgba(255,255,255,.7);}
+.rule-card.c-neutral .rule-card-effect{color:rgba(50,30,5,.55);}
+.rule-card.c-black .rule-card-effect{color:rgba(255,100,100,.8);}
+.rule-section{margin-bottom:16px;}
+.rule-section-ttl{font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+.rule-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;color:var(--text);font-family:var(--fontj);line-height:1.5;}
+.rule-row:last-child{border-bottom:none;}
+.rule-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center;margin-top:1px;}
+.rule-role-row{display:flex;gap:8px;margin:8px 0;}
+.rule-role-card{flex:1;border-radius:var(--r);padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.rule-role-card.spy-card{background:rgba(226,168,0,.1);border:1px solid rgba(226,168,0,.3);}
+.rule-role-card.op-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);}
+.rule-role-icon{font-size:22px;}
+.rule-role-name{font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text);}
+.rule-role-desc{font-size:10px;color:var(--text-dim);text-align:center;font-family:var(--fontj);line-height:1.4;}
+.tut-sheet{background:var(--panel);border-top:2px solid rgba(255,255,255,.08);border-radius:16px 16px 0 0;width:var(--app-w);height:88vh;padding:0;display:flex;flex-direction:column;animation:sheetUp .28s cubic-bezier(.34,1.4,.64,1);overflow:hidden;}
+.tut-steps-ind{display:flex;justify-content:center;gap:6px;padding:10px 0 0;}
+.tut-step-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.15);transition:all .25s;}
+.tut-step-dot.active{background:var(--gold);transform:scale(1.2);}
+.tut-step-dot.done{background:rgba(226,168,0,.4);}
+.tut-content{flex:1;overflow:hidden;position:relative;}
+.tut-step{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 20px;opacity:0;transform:translateX(40px);transition:opacity .3s ease,transform .3s ease;pointer-events:none;}
+.tut-step.active{opacity:1;transform:translateX(0);pointer-events:auto;}
+.tut-step.exit-left{opacity:0;transform:translateX(-40px);}
+.tut-step-num{font-family:var(--font);font-size:10px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:6px;}
+.tut-step-title{font-family:var(--font);font-size:22px;font-weight:700;letter-spacing:1px;color:var(--text);margin-bottom:12px;text-align:center;}
+.tut-step-desc{font-size:13px;color:var(--text-dim);font-family:var(--fontj);line-height:1.7;text-align:center;margin-bottom:16px;}
+.tut-demo{width:100%;margin:8px 0;}
+.tut-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;width:100%;}
+.tut-card{aspect-ratio:1.6/1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:8px;font-weight:700;text-transform:uppercase;text-align:center;line-height:1.1;padding:2px;position:relative;overflow:hidden;transition:all .3s ease;}
+.tut-card.tc-hidden{background:#e8dfc0;border:2px solid #c4b483;color:#1a1008;}
+.tut-card.tc-red{background:var(--red);border:2px solid var(--red-dark);color:#fff;}
+.tut-card.tc-blue{background:var(--blue);border:2px solid var(--blue-dark);color:#fff;}
+.tut-card.tc-neutral{background:#a89060;border:2px solid #7a6840;color:rgba(50,30,5,.7);}
+.tut-card.tc-black{background:#080808;border:2px solid #000;color:rgba(255,255,255,.5);}
+.tut-card.spy-red{background:#e8dfc0;border:3px solid var(--red);color:#1a1008;}
+.tut-card.spy-blue{background:#e8dfc0;border:3px solid var(--blue);color:#1a1008;}
+.tut-card.spy-neutral{background:#e8dfc0;border:2px solid #b8a870;color:#1a1008;}
+.tut-card.spy-black{background:#1a1a1a;border:3px solid #222;color:#666;}
+.tut-card.selected-anim{outline:2.5px solid #fff;outline-offset:1px;box-shadow:0 0 0 4px rgba(255,255,255,.35);}
+.tut-hint-bar{width:100%;background:#08111c;border-radius:var(--r);padding:8px 12px;display:flex;align-items:center;gap:8px;margin-top:8px;}
+.tut-hint-word{font-family:var(--font);font-size:18px;font-weight:700;letter-spacing:2px;}
+.tut-hint-cnt{font-family:var(--font);font-size:16px;font-weight:700;padding:1px 8px;border-radius:3px;}
+.tut-hint-cnt.red{background:var(--red);color:#fff;}
+.tut-hint-cnt.blue{background:var(--blue);color:#fff;}
+.tut-result{width:100%;border-radius:var(--r);padding:12px;text-align:center;margin-top:8px;}
+.tut-result.win{background:rgba(46,204,113,.15);border:1.5px solid #2ecc71;}
+.tut-result.lose{background:rgba(192,57,43,.15);border:1.5px solid var(--red);}
+.tut-result-icon{font-size:28px;margin-bottom:4px;}
+.tut-result-text{font-family:var(--font);font-size:14px;font-weight:700;letter-spacing:1px;}
+.tut-result.win .tut-result-text{color:#2ecc71;}
+.tut-result.lose .tut-result-text{color:#e74c3c;}
+.tut-nav{padding:12px 20px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.tut-nav-prev{width:44px;height:44px;border-radius:50%;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:var(--text-dim);font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s;}
+.tut-nav-prev:active{transform:scale(.92);}
+.tut-nav-next{flex:1;height:44px;border-radius:var(--r);border:none;background:var(--gold);color:#000;font-family:var(--font);font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .12s;}
+.tut-nav-next:active{transform:scale(.96);filter:brightness(.88);}
+.tut-close-btn{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--text-dim);font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.custom-word-list{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+.custom-word-row{display:flex;align-items:center;gap:6px;}
+.custom-word-input{flex:1;height:38px;background:rgba(0,0,0,.35);border:1.5px solid rgba(255,255,255,.12);border-radius:var(--r);color:var(--text);font-family:var(--fontj);font-size:14px;padding:0 10px;transition:border-color .15s;}
+.custom-word-input:focus{border-color:var(--gold);}
+.custom-word-input::placeholder{color:rgba(255,255,255,.2);}
+.custom-word-del{width:34px;height:34px;border-radius:var(--r);border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text-dim);font-size:14px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s;}
+.custom-word-del:active{background:rgba(192,57,43,.2);color:#e74c3c;}
+.custom-word-add{width:100%;height:36px;border-radius:var(--r);border:1px dashed rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.4);font-family:var(--font);font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .12s;margin-top:2px;}
+.custom-word-add:active{background:rgba(255,255,255,.05);}
+.custom-word-count{font-family:var(--font);font-size:10px;letter-spacing:1px;color:var(--text-dim);text-align:right;margin-top:4px;}
+.custom-word-count em{color:var(--gold);font-style:normal;}
+#turn-banner{position:fixed;inset:0;z-index:7500;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.turn-banner-inner{display:flex;align-items:center;justify-content:center;padding:14px 32px;border-radius:var(--r);font-family:var(--font);font-size:28px;font-weight:700;letter-spacing:3px;text-transform:uppercase;opacity:0;transform:translateY(-30px);animation:turnBannerAnim 2.2s cubic-bezier(.34,1.4,.64,1) forwards;box-shadow:0 8px 40px rgba(0,0,0,.6);}
+.turn-banner-inner.red{background:var(--red);color:#fff;box-shadow:0 8px 40px rgba(192,57,43,.5);}
+.turn-banner-inner.blue{background:var(--blue);color:#fff;box-shadow:0 8px 40px rgba(36,113,163,.5);}
+@keyframes turnBannerAnim{0%{opacity:0;transform:translateY(-40px) scale(.85);}
+20%{opacity:1;transform:translateY(0) scale(1.05);}
+35%{opacity:1;transform:translateY(0) scale(1);}
+75%{opacity:1;transform:translateY(0) scale(1);}
+100%{opacity:0;transform:translateY(20px) scale(.9);}
+}
+#turn-flash{position:fixed;inset:0;z-index:7400;pointer-events:none;opacity:0;}
+#turn-flash.flash-red{animation:flashRed .5s ease forwards;}
+#turn-flash.flash-blue{animation:flashBlue .5s ease forwards;}
+@keyframes flashRed{0%{opacity:0}
+25%{opacity:.35;background:var(--red)}
+100%{opacity:0}
+}
+@keyframes flashBlue{0%{opacity:0}
+25%{opacity:.35;background:var(--blue)}
+100%{opacity:0}
+}
+#wrong-banner{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:7600;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.wrong-banner-inner{background:rgba(20,20,30,.95);border:1.5px solid rgba(255,255,255,.15);border-radius:var(--r);padding:10px 18px;font-family:var(--fontj);font-size:13px;font-weight:700;color:var(--text);text-align:center;line-height:1.5;opacity:0;transform:translateY(10px);animation:wrongBannerAnim 2.5s ease forwards;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+.wrong-banner-inner.turn-end{border-color:var(--red);color:#f1948a;}
+.wrong-banner-inner.opp-card{border-color:var(--blue);color:#7fb3d3;}
+@keyframes wrongBannerAnim{0%{opacity:0;transform:translateY(10px);}
+15%{opacity:1;transform:translateY(0);}
+70%{opacity:1;transform:translateY(0);}
+100%{opacity:0;transform:translateY(-8px);}
+}
+.crd.shake{animation:cardShake .5s ease;}
+@keyframes cardShake{0%,100%{transform:translateX(0);}
+20%{transform:translateX(-6px) rotate(-2deg);}
+40%{transform:translateX(6px) rotate(2deg);}
+60%{transform:translateX(-4px) rotate(-1deg);}
+80%{transform:translateX(4px) rotate(1deg);}
+}
+#turn-banner{position:fixed;inset:0;z-index:7500;display:none;align-items:center;justify-content:center;pointer-events:none;}
+#turn-banner.show{display:flex;}
+.turn-banner-inner{padding:18px 40px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:6px;transform:translateX(-110%);animation:bannerSlide .5s cubic-bezier(.34,1.3,.64,1) forwards;box-shadow:0 8px 40px rgba(0,0,0,.6);}
+@keyframes bannerSlide{0%{transform:translateX(-110%);opacity:0;}
+60%{transform:translateX(8%);opacity:1;}
+100%{transform:translateX(0);opacity:1;}
+}
+.turn-banner-inner.red{background:var(--red);border:3px solid #ff6b6b;}
+.turn-banner-inner.blue{background:var(--blue);border:3px solid #74b9ff;}
+.turn-banner-team{font-family:var(--font);font-size:32px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.4);}
+.turn-banner-sub{font-family:var(--font);font-size:13px;letter-spacing:2px;color:rgba(255,255,255,.75);text-transform:uppercase;}
+#turn-flash{position:fixed;inset:0;z-index:7400;pointer-events:none;opacity:0;}
+#turn-flash.flash-red{animation:flashRed .55s ease forwards;}
+#turn-flash.flash-blue{animation:flashBlue .55s ease forwards;}
+@keyframes flashRed{0%{background:rgba(192,57,43,.0);opacity:0;}
+25%{background:rgba(192,57,43,.45);opacity:1;}
+100%{background:rgba(192,57,43,.0);opacity:0;}
+}
+@keyframes flashBlue{0%{background:rgba(36,113,163,.0);opacity:0;}
+25%{background:rgba(36,113,163,.45);opacity:1;}
+100%{background:rgba(36,113,163,.0);opacity:0;}
+}
+@keyframes cardShake{0%,100%{transform:translateX(0);}
+15%{transform:translateX(-5px) rotate(-2deg);}
+30%{transform:translateX(5px) rotate(2deg);}
+45%{transform:translateX(-4px) rotate(-1deg);}
+60%{transform:translateX(4px) rotate(1deg);}
+75%{transform:translateX(-2px);}
+}
+.crd.shake{animation:cardShake .45s ease;}
+#endturn-banner{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:7600;pointer-events:none;display:none;}
+#endturn-banner.show{display:block;animation:etBannerIn .3s ease forwards;}
+@keyframes etBannerIn{from{opacity:0;transform:translateX(-50%) translateY(12px);}
+to{opacity:1;transform:translateX(-50%) translateY(0);}
+}
+.endturn-banner-inner{background:rgba(15,20,30,.96);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;padding:10px 20px;display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap;}
+.endturn-banner-title{font-family:var(--font);font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.endturn-banner-sub{font-family:var(--fontj);font-size:11px;color:var(--text-dim);}
+.g-join-bar{flex-shrink:0;background:#060f1a;border-top:1px solid rgba(255,255,255,.06);padding:6px 10px 8px;display:flex;align-items:center;gap:6px;}
+.g-spec-toggle{height:34px;padding:0 10px;border-radius:var(--r);border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:var(--text-dim);font-family:var(--font);font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:all .12s;flex-shrink:0;}
+.g-spec-toggle.active{background:rgba(226,168,0,.15);border-color:var(--gold);color:var(--gold);}
+.g-spec-toggle:active{transform:scale(.94);}
+.g-join-btn{flex:1;height:34px;border-radius:var(--r);border:none;font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .12s;}
+.g-join-btn.red{background:var(--red);color:#fff;}
+.g-join-btn.blue{background:var(--blue);color:#fff;}
+.g-join-btn.ghost{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--text-dim);}
+.g-join-btn:active{transform:scale(.95);filter:brightness(.85);}
+.join-popup-ov{position:fixed;inset:0;z-index:6500;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;}
+.join-popup-ov.open{display:flex;}
+.join-popup{background:var(--panel);border:1.5px solid rgba(255,255,255,.12);border-radius:14px;padding:20px 18px 16px;width:300px;animation:popIn .2s cubic-bezier(.34,1.4,.64,1);}
+.join-popup-title{font-family:var(--font);font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text);text-align:center;margin-bottom:14px;}
+.join-popup-teams{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.join-popup-team-btn{height:44px;border-radius:var(--r);border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text-dim);font-family:var(--font);font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .12s;}
+.join-popup-team-btn.red.sel{background:var(--red-bg);border-color:var(--red);color:#f1948a;}
+.join-popup-team-btn.blue.sel{background:var(--blue-bg);border-color:var(--blue);color:#7fb3d3;}
+.join-popup-team-btn:active{transform:scale(.95);}
+.join-popup-roles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.join-popup-role-btn{height:40px;border-radius:var(--r);border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--text-dim);font-family:var(--font);font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .12s;}
+.join-popup-role-btn.sel{background:rgba(226,168,0,.15);border-color:var(--gold);color:var(--gold);}
+.join-popup-role-btn:active{transform:scale(.95);}
+.join-popup-confirm{width:100%;height:46px;border-radius:var(--r);border:none;font-family:var(--font);font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;background:var(--gold);color:#000;margin-bottom:8px;transition:all .12s;}
+.join-popup-confirm:disabled{opacity:.35;pointer-events:none;}
+.join-popup-confirm:active{transform:scale(.96);}
+.join-popup-cancel{width:100%;height:38px;border-radius:var(--r);border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--text-dim);font-family:var(--font);font-size:12px;cursor:pointer;}
+.help-btn{height:36px !important;padding:0 12px !important;font-size:11px !important;border-radius:var(--r) !important;}
+.g-gear{width:28px !important;height:28px !important;font-size:13px !important;}
+.room-player-cnt{font-family:var(--font);font-size:10px;color:var(--text-dim);display:flex;align-items:center;gap:4px;}
+.room-player-cnt em{color:var(--text);font-style:normal;font-weight:600;}
+.g-players-bar{flex-shrink:0;display:flex;gap:0;background:#07111c;border-top:1px solid rgba(255,255,255,.05);}
+.g-players-col{flex:1;padding:5px 8px 6px;display:flex;flex-direction:column;gap:3px;overflow:hidden;}
+.g-players-col.red-col{background:var(--red);border-right:1px solid rgba(0,0,0,.2);}
+.g-players-col.blue-col{background:var(--blue);}
+.g-players-col .g-players-col-ttl{color:rgba(255,255,255,.7);}
+.g-players-col .g-player-name{color:#fff;}
+.g-players-col .g-player-dot.on{background:#7fff7f;box-shadow:0 0 3px #0f0;}
+.g-players-col .g-player-dot.off{background:#ff9999;}
+.g-players-col-ttl{font-family:var(--font);font-size:8px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:1px;}
+.g-players-col.red-col .g-players-col-ttl{color:rgba(192,57,43,.7);}
+.g-players-col.blue-col .g-players-col-ttl{color:rgba(36,113,163,.7);}
+.g-player-row{display:flex;align-items:center;gap:4px;font-family:var(--fontj);font-size:10px;color:var(--text-dim);line-height:1.3;white-space:nowrap;overflow:hidden;}
+.g-player-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.g-player-dot.on{background:#2ecc71;}
+.g-player-dot.off{background:#e74c3c;opacity:.6;}
+.g-player-name{flex:1;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--text);}
+.g-player-name.me{color:#fff;font-weight:600;}
+.g-player-role-badge{font-family:var(--font);font-size:7px;font-weight:600;letter-spacing:.5px;padding:1px 4px;border-radius:3px;flex-shrink:0;}
+.g-player-role-badge.spy{background:rgba(255,255,255,.25);color:#fff;}
+.g-player-role-badge.op{background:rgba(255,255,255,.15);color:#fff;}
+.g-player-role-badge.spec{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);}
+</style>
+</head>
+<body>
+
+<div id="ass-ov"></div>
+<div id="turn-flash"></div>
+<div id="turn-banner">
+  <div class="turn-banner-inner" id="turn-banner-inner">
+    <div class="turn-banner-team" id="turn-banner-team">RED TEAM</div>
+    <div class="turn-banner-sub">YOUR TURN</div>
+  </div>
+</div>
+<div id="endturn-banner">
+  <div class="endturn-banner-inner">
+    <div class="endturn-banner-title" id="endturn-banner-title">⚠ ターン終了！</div>
+    <div class="endturn-banner-sub" id="endturn-banner-sub">強制ターン終了</div>
+  </div>
+</div>
+<div id="combo"></div>
+<div id="cd-ov"><div id="cd-num">3</div></div>
+<div id="toasts"></div>
+
+<div id="app">
+
+<!-- ローディング -->
+<div class="screen active" id="screen-loading">
+  <div><div class="load-logo"><em>SPY</em> WORD</div><div class="load-sub">Online Multiplayer</div></div>
+  <div class="spin"></div>
+</div>
+
+<!-- タイトル -->
+<div class="screen" id="screen-title">
+  <div class="title-deco"></div>
+  <div class="title-splash r"></div>
+  <div class="title-splash b"></div>
+  <div class="title-body">
+    <div class="logo-block">
+      <div class="logo-main"><span style="color:var(--gold)">SPY</span> WORD</div>
+    </div>
+    <div class="team-bar">
+      <div class="team-bar-r">Red Team</div>
+      <div class="team-bar-b">Blue Team</div>
+    </div>
+    <div class="title-nick">
+      <label class="lbl">Your Nickname</label>
+      <input type="text" class="input-field" id="nick-in" placeholder="名前を入力..." maxlength="12" autocomplete="off">
+    </div>
+    <div class="title-btns">
+      <button class="btn btn-red"  id="btn-create">▶ ルームを作る</button>
+      <button class="btn btn-blue" id="btn-join">🔑 IDで参加する</button>
+      <button class="btn btn-ghost btn-sm" id="btn-public">🌐 公開ルームを探す</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="help-btn rules-btn" onclick="openRules()">📖 ルール</button>
+      <button class="help-btn tut-btn"   onclick="openTutorial()">🎓 チュートリアル</button>
+    </div>
+    <div class="title-foot">SPY WORD · Firebase Online</div>
+  </div>
+</div>
+
+<!-- ルーム作成 -->
+<div class="screen" id="screen-create">
+  <div class="screen-hdr">
+    <button class="back-btn" id="create-back">←</button>
+    <h2>Create Room</h2>
+    <div style="width:32px"></div>
+  </div>
+  <div class="scroll-area">
+    <div class="ssec">
+      <div class="ssec-ttl">Players</div>
+      <div class="srow"><div><div class="srow-lbl">最大人数</div><div class="srow-sub">ルームの上限</div></div>
+        <div class="stepper"><button class="step-btn" id="mx-m">−</button><div class="step-val" id="mx-v">8</div><button class="step-btn" id="mx-p">＋</button></div>
+      </div>
+      <div class="srow"><div><div class="srow-lbl">最少人数</div><div class="srow-sub">開始に必要な人数</div></div>
+        <div class="stepper"><button class="step-btn" id="mn-m">−</button><div class="step-val" id="mn-v">4</div><button class="step-btn" id="mn-p">＋</button></div>
+      </div>
+    </div>
+    <div class="ssec">
+      <div class="ssec-ttl">Game</div>
+      <div class="srow"><div><div class="srow-lbl">制限時間</div><div class="srow-sub">1ターンあたり</div></div>
+        <div class="stepper"><button class="step-btn" id="tm-m">−</button><div class="step-val" id="tm-v">1<span style="font-size:10px">分</span>30<span style="font-size:10px">秒</span></div><button class="step-btn" id="tm-p">＋</button></div>
+      </div>
+    </div>
+    <div class="ssec">
+      <div class="ssec-ttl">Custom Words</div>
+      <div class="srow">
+        <div><div class="srow-lbl">カスタムワードを使う</div><div class="srow-sub">ON：自分のワードを混ぜる</div></div>
+        <label class="tog-wrap"><input type="checkbox" id="tog-custom"><div class="tog-track"><div class="tog-thumb"></div></div></label>
+      </div>
+      <!-- カスタムワード入力エリア（トグルON時のみ表示） -->
+      <div id="custom-words-area" style="display:none">
+        <div class="srow" style="border:none;padding-bottom:0">
+          <div><div class="srow-lbl">ワードリスト</div><div class="srow-sub">デフォルト250語と混ぜて使用</div></div>
+        </div>
+        <div class="custom-word-list" id="custom-word-list"></div>
+        <button class="custom-word-add" id="custom-word-add-btn">＋ ワードを追加</button>
+        <div class="custom-word-count"><em id="custom-word-cnt">0</em> / 10語</div>
+      </div>
+    </div>
+    <div class="ssec">
+      <div class="ssec-ttl">Visibility</div>
+      <div class="srow"><div><div class="srow-lbl">公開ルーム</div><div class="srow-sub">ルームリストに表示</div></div>
+        <label class="tog-wrap"><input type="checkbox" id="tog-pub" checked><div class="tog-track"><div class="tog-thumb"></div></div></label>
+      </div>
+    </div>
+    <div class="error-banner" id="create-err" style="display:none;background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.4);border-radius:var(--r);padding:8px;font-size:12px;color:#f1948a;text-align:center;margin-top:8px"></div>
+  </div>
+  <div class="create-foot">
+    <button class="btn btn-gold" id="btn-create-ok">✦ ルームを作成する</button>
+  </div>
+</div>
+
+<!-- PIN参加 -->
+<div class="screen" id="screen-join">
+  <div class="screen-hdr">
+    <button class="back-btn" id="join-back">←</button>
+    <h2>Join Room</h2>
+    <div style="width:32px"></div>
+  </div>
+  <div class="join-body">
+    <div style="font-family:var(--font);font-size:11px;letter-spacing:3px;color:var(--text-dim);text-transform:uppercase">Room ID を入力</div>
+    <div class="pin-disp">
+      <div class="pin-dots"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div></div>
+      <div class="pin-val" id="pin-val">＿＿＿＿</div>
+    </div>
+    <div class="pinpad" id="pinpad">
+      <div class="pkey" data-k="1">1</div><div class="pkey" data-k="2">2</div><div class="pkey" data-k="3">3</div>
+      <div class="pkey" data-k="4">4</div><div class="pkey" data-k="5">5</div><div class="pkey" data-k="6">6</div>
+      <div class="pkey" data-k="7">7</div><div class="pkey" data-k="8">8</div><div class="pkey" data-k="9">9</div>
+      <div class="pkey empty"></div><div class="pkey" data-k="0">0</div><div class="pkey del" id="pin-del">⌫</div>
+    </div>
+    <div class="error-banner" id="join-err" style="display:none;background:rgba(192,57,43,.15);border:1px solid rgba(192,57,43,.4);border-radius:var(--r);padding:8px;font-size:12px;color:#f1948a;text-align:center;width:100%"></div>
+  </div>
+  <div class="join-foot">
+    <button class="btn btn-blue" id="btn-join-ok" disabled>参加する</button>
+  </div>
+</div>
+
+<!-- 公開ルームリスト -->
+<div class="screen" id="screen-rooms">
+  <div class="screen-hdr">
+    <button class="back-btn" id="rooms-back">←</button>
+    <h2>Public Rooms</h2>
+    <button class="back-btn" id="rooms-ref">↻</button>
+  </div>
+  <div class="scroll-area" id="rooms-list">
+    <div class="empty-state"><div class="ei">🔍</div><p>検索中...</p></div>
+  </div>
+</div>
+
+<!-- ロビー -->
+<div class="screen" id="screen-lobby">
+  <div class="lobby-hdr">
+    <div class="rid-wrap">
+      <div><div class="rid-lbl">Room ID</div><div class="rid-val" id="lobby-rid">----</div></div>
+      <button class="copy-btn" id="copy-rid">コピー</button>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button class="help-btn rules-btn" onclick="openRules()" style="height:28px;font-size:9px">📖</button>
+      <button class="help-btn tut-btn"   onclick="openTutorial()" style="height:28px;font-size:9px">🎓</button>
+      <button class="gear-btn" id="lobby-gear">⚙</button>
+    </div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <div class="lobby-teams">
+      <div class="tcol">
+        <div class="thdr red"><span class="tname">Red Team</span><span class="tcnt" id="red-cnt">0人</span></div>
+        <div class="tplayers" id="red-ply"></div>
+      </div>
+      <div class="tcol">
+        <div class="thdr blue"><span class="tname">Blue Team</span><span class="tcnt" id="blue-cnt">0人</span></div>
+        <div class="tplayers" id="blue-ply"></div>
+      </div>
+    </div>
+    <div class="unass-area" id="unass-area">
+      <div class="unass-lbl">未割り当て</div>
+      <div class="unass-chips" id="unass-chips"></div>
+    </div>
+    <div class="chat-prev" id="lobby-chat-prev">
+      <span style="font-size:14px">💬</span>
+      <span class="chat-prev-txt" id="chat-prev-txt">チャットしよう...</span>
+      <span style="font-size:12px;color:var(--text-dim)">▸</span>
+    </div>
+  </div>
+  <div class="lobby-foot">
+    <div class="lf-row" id="team-row">
+      <button class="team-btn red"  id="btn-red-team">🔴 Red Team</button>
+      <button class="team-btn blue" id="btn-blue-team">🔵 Blue Team</button>
+    </div>
+    <div class="lf-row" id="role-row" style="display:none">
+      <button class="team-btn" id="btn-spy">👁 Spymaster</button>
+      <button class="team-btn" id="btn-op">🕵 Operative</button>
+    </div>
+    <button class="btn btn-dark btn-sm" id="btn-random-team" style="display:none;min-height:40px">🔀 チームをランダム割り当て</button>
+    <button class="btn btn-gold" id="btn-start" style="display:none">▶ ゲーム開始</button>
+    <button class="btn btn-ghost btn-sm" id="btn-leave" style="min-height:38px">退出する</button>
+  </div>
+</div>
+
+<!-- ゲーム画面 -->
+<div class="screen" id="screen-game">
+  <div class="g-scorebar">
+    <div class="sc-block red" id="sc-red">
+      <div class="sc-num" id="sc-red-n">9</div>
+      <div class="sc-lbl">Red Team</div>
+    </div>
+    <div class="sc-center">
+      <div class="g-timer" id="g-timer">--:--</div>
+      <div style="display:flex;gap:4px;align-items:center;justify-content:center">
+        <button class="g-gear" id="g-gear" style="width:30px;height:30px;font-size:13px">⚙</button>
+        <button class="g-gear" onclick="openRules()" style="width:30px;height:30px;font-size:13px">📖</button>
+        <button class="g-gear" onclick="openTutorial()" style="width:30px;height:30px;font-size:13px">🎓</button>
+      </div>
+    </div>
+    <div class="sc-block blue" id="sc-blue">
+      <div class="sc-num" id="sc-blue-n">8</div>
+      <div class="sc-lbl">Blue Team</div>
+    </div>
+  </div>
+  <div class="g-rolebar">
+    <div class="g-role" id="g-role">---</div>
+    <div class="g-typing" id="g-typing"></div>
+  </div>
+  <div class="g-grid-wrap">
+    <div class="g-grid" id="g-grid"></div>
+  </div>
+  <!-- ゲーム中プレイヤー一覧 -->
+  <div class="g-players-bar" id="g-players-bar">
+    <div class="g-players-col red-col" id="g-players-red">
+      <div class="g-players-col-ttl">🔴 RED</div>
+    </div>
+    <div class="g-players-col blue-col" id="g-players-blue">
+      <div class="g-players-col-ttl">🔵 BLUE</div>
+    </div>
+  </div>
+  <div class="g-hintbar">
+    <div class="g-hinfo" id="g-hinfo"><span class="g-hwait">スパイマスターがヒントを考えています...</span></div>
+    <div class="g-hleft" id="g-hleft"></div>
+  </div>
+  <!-- エージェント用 -->
+  <div class="g-actionbar" id="g-actbar" style="display:none">
+    <button class="btn btn-ghost btn-sm" id="btn-endturn" style="min-height:36px">End Turn</button>
+  </div>
+  <!-- スパイマスター用 -->
+  <div class="g-hintinput" id="g-hintinput" style="display:none">
+    <div class="g-hinrow">
+      <input type="text" class="g-hw-in" id="g-hw-in" placeholder="Hint word..." maxlength="20" autocomplete="off">
+      <select class="g-hnum-sel" id="g-hnum">
+        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+        <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+        <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+        <option value="0">∞</option>
+      </select>
+      <button class="g-hsub" id="g-hsub">Give Clue</button>
+    </div>
+  </div>
+  <!-- ゲーム中チャット（最新1行常時表示） -->
+  <div class="g-chat-prev" id="g-chat-prev">
+    <span style="font-size:12px;flex-shrink:0">💬</span>
+    <span class="g-chat-prev-txt" id="g-chat-prev-txt">チャットしよう...</span>
+    <span class="g-chat-open-btn">開く</span>
+  </div>
+  <!-- 観戦/参加バー（常時表示） -->
+  <div class="g-join-bar" id="g-join-bar" style="display:none">
+    <button class="g-spec-toggle" id="btn-spec-view">👁 色を見る</button>
+    <button class="g-join-btn ghost" id="btn-game-join">🙋 参加する</button>
+    <button class="g-join-btn ghost" id="btn-game-spec">👀 観戦に切替 →⚙</button>
+  </div>
+  <!-- 役割切替バー（1人プレイ専用） -->
+  <div class="g-switchbar" id="g-switchbar" style="display:none">
+    <div class="g-switch-btns">
+      <button class="g-sw-btn red-role" id="sw-spy-red">🔴 SPY</button>
+      <button class="g-sw-btn red-role" id="sw-op-red">🔴 OP</button>
+      <button class="g-sw-btn blue-role" id="sw-spy-blue">🔵 SPY</button>
+      <button class="g-sw-btn blue-role" id="sw-op-blue">🔵 OP</button>
+    </div>
+    <button class="g-endturn-solo" id="btn-endturn-solo" style="display:none">End Turn →</button>
+  </div>
+</div>
+
+<!-- 結果画面 -->
+<div class="screen" id="screen-result">
+  <div class="res-body">
+    <div class="res-badge" id="res-badge">---</div>
+    <div class="res-name" id="res-name">---</div>
+    <div class="res-reason" id="res-reason"></div>
+    <div class="res-stats">
+      <div class="res-srow"><span class="res-slbl">赤チーム残り</span><span class="res-sval" id="stat-red">-</span></div>
+      <div class="res-srow"><span class="res-slbl">青チーム残り</span><span class="res-sval" id="stat-blue">-</span></div>
+      <div class="res-srow"><span class="res-slbl">経過時間</span><span class="res-sval" id="stat-time">-</span></div>
+      <div class="res-srow"><span class="res-slbl">ターン数</span><span class="res-sval" id="stat-turns">-</span></div>
+    </div>
+  </div>
+  <div class="res-foot">
+    <button class="btn btn-gold" id="btn-again">▶ もう一度遊ぶ</button>
+    <button class="btn btn-dark" id="btn-lobby">ロビーに戻る</button>
+    <button class="btn btn-ghost btn-sm" id="btn-res-leave">退出する</button>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<!-- 観戦切替確認ポップアップ -->
+<div class="join-popup-ov" id="spec-confirm-ov">
+  <div class="join-popup" style="text-align:center">
+    <div style="font-size:28px;margin-bottom:8px">👀</div>
+    <div class="join-popup-title">観戦に切り替える？</div>
+    <div style="font-size:12px;color:var(--text-dim);font-family:var(--fontj);margin-bottom:18px;line-height:1.6">
+      チームから抜けて観戦モードになります。<br>
+      再度参加するには⚙設定から変更できます。
+    </div>
+    <button class="join-popup-confirm" id="spec-confirm-yes" style="background:var(--blue);margin-bottom:8px">👀 観戦する</button>
+    <button class="join-popup-cancel" id="spec-confirm-no">キャンセル</button>
+  </div>
+</div>
+
+<!-- 参加選択ポップアップ -->
+<div class="join-popup-ov" id="join-popup-ov">
+  <div class="join-popup">
+    <div class="join-popup-title">チームと役割を選ぶ</div>
+    <div class="join-popup-teams">
+      <button class="join-popup-team-btn red" id="jp-red">🔴 Red Team</button>
+      <button class="join-popup-team-btn blue" id="jp-blue">🔵 Blue Team</button>
+    </div>
+    <div class="join-popup-roles">
+      <button class="join-popup-role-btn" id="jp-spy">👁 Spymaster</button>
+      <button class="join-popup-role-btn" id="jp-op">🕵 Operative</button>
+    </div>
+    <button class="join-popup-confirm" id="jp-confirm" disabled>参加する ✓</button>
+    <button class="join-popup-cancel" id="jp-cancel">キャンセル</button>
+  </div>
+</div>
+
+<!-- 参加/観戦選択ダイアログ（ルーム入室時） -->
+<div class="join-popup-ov" id="join-mode-ov">
+  <div class="join-popup">
+    <div class="join-popup-title">参加 or 観戦？</div>
+    <div style="font-size:12px;color:var(--text-dim);font-family:var(--fontj);text-align:center;margin-bottom:14px">ゲームに参加しますか？<br>それとも観戦しますか？</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="join-popup-confirm" id="jm-join" style="background:var(--blue)">🙋 参加する</button>
+      <button class="join-popup-confirm" id="jm-spec" style="background:rgba(255,255,255,.08);color:var(--text)">👀 観戦する</button>
+      <button class="join-popup-cancel" id="jm-cancel">キャンセル</button>
+    </div>
+  </div>
+</div>
+<!-- =============================================
+     📖 ルール説明モーダル
+     ============================================= -->
+<div class="modal-ov" id="rules-modal">
+  <div class="modal-sheet" style="max-height:90vh;height:90vh;display:flex;flex-direction:column">
+    <div class="modal-bar"></div>
+    <div class="modal-ttl">📖 ルール説明</div>
+    <div class="modal-body rules-modal-body" style="overflow-y:auto;flex:1;min-height:0;padding-bottom:12px;touch-action:pan-y">
+
+      <!-- カードの種類 -->
+      <div class="rule-section">
+        <div class="rule-section-ttl">🃏 カードの種類</div>
+        <div class="rule-cards-row">
+          <div class="rule-card c-hidden">
+            <div class="rule-card-label">????</div>
+            <div class="rule-card-effect">未開示</div>
+          </div>
+          <div class="rule-card c-red">
+            <div class="rule-card-label">RED</div>
+            <div class="rule-card-effect">赤チーム</div>
+          </div>
+          <div class="rule-card c-blue">
+            <div class="rule-card-label">BLUE</div>
+            <div class="rule-card-effect">青チーム</div>
+          </div>
+          <div class="rule-card c-neutral">
+            <div class="rule-card-label">---</div>
+            <div class="rule-card-effect">中立</div>
+          </div>
+          <div class="rule-card c-black">
+            <div class="rule-card-label">✕</div>
+            <div class="rule-card-effect" style="color:rgba(255,80,80,.8)">即負け</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div class="rule-row"><span class="rule-icon">🔴</span><span>赤チームのカード。赤オペレーターが当てると続けられる</span></div>
+          <div class="rule-row"><span class="rule-icon">🔵</span><span>青チームのカード。青オペレーターが当てると続けられる</span></div>
+          <div class="rule-row"><span class="rule-icon">🟫</span><span>中立カード。選ぶとターン終了</span></div>
+          <div class="rule-row"><span class="rule-icon">⬛</span><span><strong style="color:#e74c3c">アサシン</strong>。選んだチームが即負け！</span></div>
+        </div>
+      </div>
+
+      <!-- 役割 -->
+      <div class="rule-section">
+        <div class="rule-section-ttl">👥 役割</div>
+        <div class="rule-role-row">
+          <div class="rule-role-card spy-card">
+            <div class="rule-role-icon">👁</div>
+            <div class="rule-role-name">Spymaster</div>
+            <div class="rule-role-desc">カードの色が<br>全部見える。<br>ヒントを出す役</div>
+          </div>
+          <div class="rule-role-card op-card">
+            <div class="rule-role-icon">🕵</div>
+            <div class="rule-role-name">Operative</div>
+            <div class="rule-role-desc">カードの色は<br>見えない。<br>カードを選ぶ役</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ゲームの流れ -->
+      <div class="rule-section">
+        <div class="rule-section-ttl">🎮 ゲームの流れ</div>
+        <div class="rule-row"><span class="rule-icon">1️⃣</span><span>スパイマスターが<strong>1単語＋数字</strong>のヒントを出す<br><span style="color:var(--text-dim);font-size:11px">例：「動物 3」→ 動物に関係するカードが3枚</span></span></div>
+        <div class="rule-row"><span class="rule-icon">2️⃣</span><span>オペレーターがカードを選ぶ<br><span style="color:var(--text-dim);font-size:11px">正解なら続けてOK。数字+1枚まで選べる</span></span></div>
+        <div class="rule-row"><span class="rule-icon">3️⃣</span><span>間違えたらターン終了。相手のターンへ</span></div>
+        <div class="rule-row"><span class="rule-icon">🏆</span><span>自チームのカードを<strong>全部先に見つけたら勝利！</strong></span></div>
+      </div>
+
+      <!-- ヒントのルール -->
+      <div class="rule-section">
+        <div class="rule-section-ttl">💡 ヒントのルール</div>
+        <div class="rule-row"><span class="rule-icon">✅</span><span>1単語のみ。数字は関係するカードの枚数</span></div>
+        <div class="rule-row"><span class="rule-icon">✅</span><span>∞にすると無制限に選べる</span></div>
+        <div class="rule-row"><span class="rule-icon">❌</span><span>ボード上の単語はヒントに使えない</span></div>
+        <div class="rule-row"><span class="rule-icon">⚠️</span><span>先攻チームは9枚、後攻は8枚。先攻が有利！</span></div>
+      </div>
+
+    </div>
+    <div style="padding:10px 0 0">
+      <button class="btn btn-dark btn-sm" onclick="closeMod('rules-modal')" style="min-height:42px">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- =============================================
+     🎓 チュートリアルモーダル
+     ============================================= -->
+<div class="modal-ov" id="tutorial-modal">
+  <div class="tut-sheet">
+    <div style="display:flex;justify-content:flex-end;padding:8px 14px 0">
+      <button class="tut-close-btn" onclick="closeTutorial()">✕</button>
+    </div>
+    <div class="tut-steps-ind" id="tut-dots"></div>
+
+    <div class="tut-content" id="tut-content">
+
+      <!-- Step 1: チームと役割 -->
+      <div class="tut-step active" data-step="0">
+        <div class="tut-step-num">Step 1 / 5</div>
+        <div class="tut-step-title">2チームで対戦！</div>
+        <div class="tut-step-desc">赤チームと青チームに分かれます。<br>各チームに<strong style="color:var(--gold)">スパイマスター</strong>と<strong>オペレーター</strong>を決めます。</div>
+        <div class="tut-demo">
+          <div style="display:flex;gap:10px">
+            <div style="flex:1;background:rgba(192,57,43,.15);border:1.5px solid var(--red);border-radius:var(--r);padding:12px;text-align:center">
+              <div style="font-size:22px;margin-bottom:4px">🔴</div>
+              <div style="font-family:var(--font);font-size:13px;font-weight:700;color:#f1948a;letter-spacing:1px">RED TEAM</div>
+              <div style="font-size:11px;color:var(--text-dim);margin-top:4px;font-family:var(--fontj)">先攻：9枚</div>
+            </div>
+            <div style="flex:1;background:rgba(36,113,163,.15);border:1.5px solid var(--blue);border-radius:var(--r);padding:12px;text-align:center">
+              <div style="font-size:22px;margin-bottom:4px">🔵</div>
+              <div style="font-family:var(--font);font-size:13px;font-weight:700;color:#7fb3d3;letter-spacing:1px">BLUE TEAM</div>
+              <div style="font-size:11px;color:var(--text-dim);margin-top:4px;font-family:var(--fontj)">後攻：8枚</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:8px">
+            <div style="flex:1;background:rgba(226,168,0,.1);border:1px solid rgba(226,168,0,.3);border-radius:var(--r);padding:8px;text-align:center">
+              <div style="font-size:18px">👁</div>
+              <div style="font-family:var(--font);font-size:11px;color:var(--gold);font-weight:700">SPYMASTER</div>
+              <div style="font-size:10px;color:var(--text-dim);font-family:var(--fontj)">カードの色が見える</div>
+            </div>
+            <div style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:8px;text-align:center">
+              <div style="font-size:18px">🕵</div>
+              <div style="font-family:var(--font);font-size:11px;color:var(--text);font-weight:700">OPERATIVE</div>
+              <div style="font-size:10px;color:var(--text-dim);font-family:var(--fontj)">カードを選ぶ</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: スパイマスターの見え方 -->
+      <div class="tut-step" data-step="1">
+        <div class="tut-step-num">Step 2 / 5</div>
+        <div class="tut-step-title">スパイマスターの視点</div>
+        <div class="tut-step-desc">スパイマスターだけ<br>カードの<strong style="color:var(--gold)">枠の色</strong>でチームが分かります。</div>
+        <div class="tut-demo">
+          <div class="tut-grid" id="tut-grid-step2"></div>
+          <div style="display:flex;gap:6px;margin-top:10px;justify-content:center;flex-wrap:wrap">
+            <span style="display:flex;align-items:center;gap:3px;font-size:10px;font-family:var(--fontj);color:var(--text-dim)"><span style="width:10px;height:10px;background:var(--red);border-radius:2px;display:inline-block"></span>赤チーム</span>
+            <span style="display:flex;align-items:center;gap:3px;font-size:10px;font-family:var(--fontj);color:var(--text-dim)"><span style="width:10px;height:10px;background:var(--blue);border-radius:2px;display:inline-block"></span>青チーム</span>
+            <span style="display:flex;align-items:center;gap:3px;font-size:10px;font-family:var(--fontj);color:var(--text-dim)"><span style="width:10px;height:10px;background:#a89060;border-radius:2px;display:inline-block"></span>中立</span>
+            <span style="display:flex;align-items:center;gap:3px;font-size:10px;font-family:var(--fontj);color:var(--text-dim)"><span style="width:10px;height:10px;background:#111;border-radius:2px;display:inline-block"></span>アサシン</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: ヒントの出し方 -->
+      <div class="tut-step" data-step="2">
+        <div class="tut-step-num">Step 3 / 5</div>
+        <div class="tut-step-title">ヒントを出そう</div>
+        <div class="tut-step-desc">スパイマスターは<strong>1単語＋数字</strong>でヒントを出します。<br>数字は関係するカードの枚数。</div>
+        <div class="tut-demo">
+          <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);padding:10px;margin-bottom:10px">
+            <div style="font-size:11px;color:var(--text-dim);font-family:var(--fontj);margin-bottom:6px">スパイマスターが入力中...</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <div style="flex:1;height:36px;background:rgba(0,0,0,.4);border:1.5px solid var(--gold);border-radius:var(--r);display:flex;align-items:center;padding:0 10px;font-family:var(--font);font-size:14px;color:var(--text)">動物</div>
+              <div style="width:40px;height:36px;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:16px;color:var(--text)">3</div>
+              <div style="height:36px;padding:0 12px;background:var(--red);border-radius:var(--r);display:flex;align-items:center;font-family:var(--font);font-size:11px;color:#fff;font-weight:700">GIVE</div>
+            </div>
+          </div>
+          <div class="tut-hint-bar">
+            <div class="tut-hint-word" style="color:#f1948a">動物</div>
+            <div class="tut-hint-cnt red">3</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.35);font-family:var(--font)">残り 4 回</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: カードの選び方 -->
+      <div class="tut-step" data-step="3">
+        <div class="tut-step-num">Step 4 / 5</div>
+        <div class="tut-step-title">カードを選ぼう</div>
+        <div class="tut-step-desc">オペレーターはカードを<strong>1タップで選択</strong>。<br>もう一度タップするとポップアップが出て<strong>確定</strong>できます。</div>
+        <div class="tut-demo">
+          <div class="tut-grid" id="tut-grid-step4"></div>
+          <div style="margin-top:8px;background:#0f1e2e;border:1.5px solid rgba(255,255,255,.12);border-radius:10px;padding:14px 12px;text-align:center" id="tut-popup-demo">
+            <div style="font-family:var(--font);font-size:18px;font-weight:700;letter-spacing:2px;color:var(--text);margin-bottom:10px">ライオン</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="height:40px;background:var(--red);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:13px;color:#fff;font-weight:700">✓ Guess "ライオン"</div>
+              <div style="height:36px;border:1px solid rgba(255,255,255,.15);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:12px;color:var(--text-dim)">選択を外す</div>
+              <div style="font-size:10px;color:rgba(255,255,255,.2);font-family:var(--font)">✕ 閉じる</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: 勝利・敗北 -->
+      <div class="tut-step" data-step="4">
+        <div class="tut-step-num">Step 5 / 5</div>
+        <div class="tut-step-title">勝利 or 敗北</div>
+        <div class="tut-step-desc">自チームのカードを<strong>全部先に見つけたら勝利！</strong><br>黒いアサシンカードを選んだら<strong style="color:#e74c3c">即負け</strong>。</div>
+        <div class="tut-demo">
+          <div class="tut-result win">
+            <div class="tut-result-icon">🎉</div>
+            <div class="tut-result-text">RED TEAM WIN!</div>
+            <div style="font-size:11px;color:rgba(46,204,113,.7);margin-top:4px;font-family:var(--fontj)">全カードを発見！</div>
+          </div>
+          <div class="tut-result lose" style="margin-top:8px">
+            <div class="tut-result-icon">💀</div>
+            <div class="tut-result-text">ASSASSIN!</div>
+            <div style="font-size:11px;color:rgba(231,76,60,.7);margin-top:4px;font-family:var(--fontj)">アサシンを選んでしまった...</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- tut-content -->
+
+    <div class="tut-nav" id="tut-nav">
+      <button class="tut-nav-prev" id="tut-prev">←</button>
+      <button class="tut-nav-next" id="tut-next">次へ →</button>
+    </div>
+  </div>
+</div>
+
+<!-- カード確定ポップアップ -->
+<div class="card-popup-ov" id="card-popup-ov">
+  <div class="card-popup">
+    <div class="popup-word" id="popup-word">---</div>
+    <button class="popup-guess-btn" id="popup-guess-btn">✓ Guess This Card</button>
+    <button class="popup-desel-btn" id="popup-desel-btn">選択を外す</button>
+    <button class="popup-close-btn" id="popup-close-btn">✕ 閉じる</button>
+  </div>
+</div>
+
+<!-- チャットモーダル -->
+<div class="modal-ov" id="chat-modal">
+  <div class="modal-sheet" id="chat-sheet">
+    <div class="modal-bar" id="chat-drag-bar"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="modal-ttl" style="margin-bottom:0">💬 Chat</div>
+      <button id="chat-close-btn" style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:var(--text-dim);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div class="chat-msgs" id="chat-msgs"></div>
+    <div class="chat-row">
+      <input type="text" class="chat-in" id="chat-in" placeholder="メッセージ..." maxlength="60" autocomplete="off">
+      <button class="chat-send" id="chat-send">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- 設定モーダル -->
+<div class="modal-ov" id="cfg-modal">
+  <div class="modal-sheet">
+    <div class="modal-bar"></div>
+    <div class="modal-ttl">⚙ Settings</div>
+    <div class="modal-body">
+      <div class="srow"><div><div class="srow-lbl">効果音</div></div><label class="tog-wrap"><input type="checkbox" id="sfx-tog" checked><div class="tog-track"><div class="tog-thumb"></div></div></label></div>
+      <div class="srow"><div><div class="srow-lbl">アニメーション</div></div><label class="tog-wrap"><input type="checkbox" id="anim-tog" checked><div class="tog-track"><div class="tog-thumb"></div></div></label></div>
+      <div class="srow"><div class="srow-lbl">ニックネーム変更</div></div>
+      <input type="text" class="input-field" id="cfg-nick" placeholder="新しいニックネーム..." maxlength="12" style="margin:7px 0 10px">
+      <button class="btn btn-dark btn-sm" id="btn-save-nick" style="min-height:40px">保存</button>
+
+      <!-- チーム・役割変更（多人数時・ゲーム中表示） -->
+      <div id="cfg-role-sec" style="display:none">
+        <div style="font-family:var(--font);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:16px 0 8px">チーム・役割</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px">
+          <button class="join-popup-team-btn red" id="cfg-team-red" style="height:48px;border-radius:var(--r)">🔴 Red</button>
+          <button class="join-popup-team-btn blue" id="cfg-team-blue" style="height:48px;border-radius:var(--r)">🔵 Blue</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px">
+          <button class="join-popup-role-btn" id="cfg-role-spy" style="height:44px;border-radius:var(--r)">👁 Spymaster</button>
+          <button class="join-popup-role-btn" id="cfg-role-op" style="height:44px;border-radius:var(--r)">🕵 Operative</button>
+        </div>
+        <button class="btn btn-gold btn-sm" id="cfg-role-save" style="min-height:44px;margin-bottom:8px" disabled>✓ 変更を確定</button>
+        <button class="btn btn-ghost btn-sm" id="cfg-to-spec" style="min-height:42px">👀 観戦に切り替える</button>
+      </div>
+
+      <!-- ホスト専用：ルーム設定 -->
+      <div id="host-panel" style="display:none">
+        <div style="font-family:var(--font);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin:16px 0 8px">Room Settings</div>
+        <div class="ssec" style="background:rgba(0,0,0,.2)">
+          <div class="srow">
+            <div class="srow-lbl">最大人数</div>
+            <div class="stepper"><button class="step-btn" id="cfg-mx-m">−</button><div class="step-val" id="cfg-mx-v">8</div><button class="step-btn" id="cfg-mx-p">＋</button></div>
+          </div>
+          <div class="srow">
+            <div class="srow-lbl">制限時間</div>
+            <div class="stepper"><button class="step-btn" id="cfg-tm-m">−</button><div class="step-val" id="cfg-tm-v">1<span style="font-size:10px">分</span>30<span style="font-size:10px">秒</span></div><button class="step-btn" id="cfg-tm-p">＋</button></div>
+          </div>
+          <div class="srow">
+            <div class="srow-lbl">公開ルーム</div>
+            <label class="tog-wrap"><input type="checkbox" id="cfg-pub-tog" checked><div class="tog-track"><div class="tog-thumb"></div></div></label>
+          </div>
+        </div>
+        <button class="btn btn-gold btn-sm" id="cfg-rs-save" style="min-height:40px;margin-bottom:12px">💾 ルーム設定を保存</button>
+        <div style="font-family:var(--font);font-size:9px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px">Host Panel</div>
+        <div id="host-list"></div>
+      </div>
+    </div>
+    <div style="padding-top:12px"><button class="btn btn-ghost btn-sm" id="cfg-close" style="min-height:38px">閉じる</button></div>
+  </div>
+</div>
+
+<!-- ルーム設定モーダル -->
+<div class="modal-ov" id="rsettings-modal">
+  <div class="modal-sheet">
+    <div class="modal-bar"></div>
+    <div class="modal-ttl">🏠 Room Settings</div>
+    <div class="modal-body">
+      <div class="ssec" style="background:rgba(0,0,0,.2)">
+        <div class="srow"><div class="srow-lbl">最大人数</div><div class="stepper"><button class="step-btn" id="rs-mx-m">−</button><div class="step-val" id="rs-mx-v">8</div><button class="step-btn" id="rs-mx-p">＋</button></div></div>
+        <div class="srow"><div class="srow-lbl">制限時間</div><div class="stepper"><button class="step-btn" id="rs-tm-m">−</button><div class="step-val" id="rs-tm-v">1<span style="font-size:10px">分</span>30<span style="font-size:10px">秒</span></div><button class="step-btn" id="rs-tm-p">＋</button></div></div>
+        <div class="srow"><div class="srow-lbl">公開ルーム</div><label class="tog-wrap"><input type="checkbox" id="rs-pub-tog" checked><div class="tog-track"><div class="tog-thumb"></div></div></label></div>
+      </div>
+    </div>
+    <div style="padding-top:12px;display:flex;gap:7px">
+      <button class="btn btn-ghost" id="rs-cancel" style="flex:1">キャンセル</button>
+      <button class="btn btn-gold"  id="rs-save"   style="flex:2">保存する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+const FB_CONFIG = {
+  apiKey: "AIzaSyD-PLACEHOLDER-REPLACE-ME",
+  authDomain: "spywords-game.firebaseapp.com",
+  databaseURL: "https://spywords-game-default-rtdb.firebaseio.com",
+  projectId: "spywords-game",
+  storageBucket: "spywords-game.appspot.com",
+  messagingSenderId: "000000000000",
+  appId: "1:000000000000:web:placeholder"
+};
+let db=null, firebaseReady=false;
+// Firebase設定が未設定の場合はオフラインモードで起動
+const _fbConfigured = FB_CONFIG.apiKey && !FB_CONFIG.apiKey.includes('PLACEHOLDER');
+if(!_fbConfigured) {
+  console.log('Firebase未設定：オフラインモードで起動');
+  // オフラインモードで初期化完了扱い
+  setTimeout(()=>{ document.getElementById('screen-loading').classList.remove('active'); document.getElementById('screen-title').classList.add('active'); },500);
+} else
+try {
+  if(typeof firebase === 'undefined') throw new Error('Firebase not loaded');
+  firebase.initializeApp(FB_CONFIG);
+  db=firebase.database();
+  // 接続テスト（2秒でタイムアウト）
+  const _fbTimeout=setTimeout(()=>{ firebaseReady=false; console.warn("Firebase timeout - ローカルモード"); },2000);
+  db.ref('.info/connected').once('value',()=>{ firebaseReady=true; clearTimeout(_fbTimeout); });
+} catch(e) { console.warn("Firebase未設定 - ローカルモード"); }
+
+
+const WORDS = [
+  "東京","富士山","桜","侍","忍者","寿司","ラーメン","天ぷら","新幹線","相撲",
+  "神社","城","刀","着物","茶道","将棋","花見","雷","嵐","波",
+  "海","山","川","空","雲","星","月","太陽","花","木",
+  "石","砂","土","水","火","風","雪","氷","森","島",
+  "橋","道","家","船","車","電車","飛行機","自転車","ロケット","潜水艦",
+  "医者","警察","探偵","スパイ","泥棒","王様","騎士","魔法使い","忍者","忍術",
+  "ライオン","虎","熊","狐","狼","鷹","竜","亀","蛇","鳥",
+  "薔薇","菊","紫陽花","向日葵","蓮","竹","松","桐","梅","柳",
+  "金","銀","銅","鉄","ダイヤ","宝石","指輪","鍵","鏡","時計",
+  "剣","盾","弓","矢","槍","大砲","爆弾","手裏剣","暗号","地図",
+  "図書館","病院","学校","市場","港","空港","塔","宮殿","迷宮","牢屋",
+  "パスポート","電話","手紙","地球","宇宙","銀河","彗星","衛星","惑星","太陽系",
+  "音楽","絵画","映画","舞台","祭り","戦争","平和","革命","陰謀","秘密",
+  "影","光","闇","霧","稲妻","地震","火山","洪水","砂漠","密林",
+  "学者","芸術家","冒険家","兵士","商人","漁師","料理人","職人","旅人","伝道師",
+  "友情","恋愛","嫉妬","怒り","恐怖","喜び","悲しみ","希望","絶望","勇気",
+  "勝利","敗北","秘密","嘘","真実","夢","現実","幻想","記憶","未来",
+  "暗号","謎","謎解き","証拠","容疑者","被害者","証人","裁判","逃走","追跡",
+  "作戦","罠","偽装","変装","諜報","潜入","脱出","隠蔽","暴露","解読",
+  "鉄道","トンネル","倉庫","廃墟","地下室","屋上","路地","裏口","金庫","扉",
+  "ベルリン","モスクワ","ロンドン","パリ","上海","砂漠","北極","南極","密林","海底",
+  "サングラス","コート","帽子","手袋","スーツケース","双眼鏡","無線機","毒","薬","注射",
+  "クモ","サソリ","コウモリ","カラス","フクロウ","黒猫","黒豹","白狼","赤狐","金魚",
+  "台風","霜","露","炎","灰","錆","血","毒液","暗闇","骨",
+  "影武者","二重スパイ","暗殺者","工作員","情報屋","仲介人","依頼人","黒幕","主犯","共犯",
+];
+
+
+const S = {
+  myId: null,
+  nick: "",
+  selectedCards: new Set(), // 自分の選択
+  allSelections: {},         // 全員の選択
+  specCanSeeColors: false,   // 観戦者：カード色を見るか {playerId: {idx, name, team}}
+  roomId: null,
+  isHost: false,
+  myTeam: null,        // 'red'|'blue'|null
+  myRole: null,        // 'spymaster'|'operative'|'spectator'
+  isReady: false,
+  players: {},
+  game: null,
+  settings: {},
+  chatLog: [],
+  sfx: true,
+  anim: true,
+  timerIv: null,
+  gameStart: null,
+  typingTO: null,
+  unsubs: [],
+};
+
+
+let audioCtx=null;
+function getAC() { if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function beep(type) {
+  if(!S.sfx) return;
+  try {
+    const ac=getAC();
+    const play=(freq,dur,wave='sine',vol=0.1)=>{
+      const o=ac.createOscillator(), g=ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.frequency.value=freq; o.type=wave;
+      g.gain.setValueAtTime(vol, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+dur);
+      o.start(); o.stop(ac.currentTime+dur);
+    };
+    if(type==='tap')      play(440,.12,'sine',.07);
+    else if(type==='ok')  { play(523,.15,'sine',.1); setTimeout(()=>play(659,.2,'sine',.1),120); setTimeout(()=>play(784,.3,'sine',.1),240); }
+    else if(type==='ng')  play(180,.5,'sawtooth',.1);
+    else if(type==='ass') { [150,120,90].forEach((f,i)=>setTimeout(()=>play(f,.8,'square',.15),i*200)); }
+    else if(type==='win') { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>play(f,.5,'triangle',.15),i*150)); }
+    else if(type==='cd')  play(660,.18,'square',.07);
+    else if(type==='go')  { [523,784,1047].forEach((f,i)=>setTimeout(()=>play(f,.4,'sine',.14),i*80)); }
+    else if(type==='join'){ play(440,.2,'sine',.07); setTimeout(()=>play(554,.3,'sine',.07),100); }
+  } catch(e){}
+}
+
+
+function uid(n=8) { return Array.from({length:n},()=>"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random()*62)]).join(''); }
+function roomId4() { return String(Math.floor(Math.random()*9000)+1000); }
+function shuffle(a) { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+
+function toast(msg,type='',ms=2600) {
+  const d=document.getElementById('toasts');
+  const el=document.createElement('div');
+  el.className=`toast${type?' '+type:''}`;
+  el.textContent=msg;
+  d.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),300); },ms);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>{ s.classList.remove('active'); s.style.display='none'; });
+  const t=document.getElementById(id);
+  if(t){ t.style.display='flex'; requestAnimationFrame(()=>t.classList.add('active')); }
+  console.log('→',id);
+}
+
+function fmtSec(s) { const m=Math.floor(s/60); return `${m}:${String(s%60).padStart(2,'0')}`; }
+function fmtMs(ms) { const s=Math.floor(ms/1000); return `${Math.floor(s/60)}分${s%60}秒`; }
+
+function openMod(id) { document.getElementById(id).classList.add('open'); }
+function closeMod(id){ document.getElementById(id).classList.remove('open'); }
+
+function sub(ref,ev,fn) { ref.on(ev,fn); S.unsubs.push(()=>ref.off(ev,fn)); }
+function unsubAll() { S.unsubs.forEach(f=>f()); S.unsubs=[]; }
+
+function showErr(id,msg) {
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.textContent=msg; el.style.display='block';
+  setTimeout(()=>el.style.display='none',3000);
+}
+
+
+function init() {
+  const saved=localStorage.getItem('cn_nick');
+  if(saved) { S.nick=saved; document.getElementById('nick-in').value=saved; }
+  S.myId=localStorage.getItem('cn_id')||uid();
+  localStorage.setItem('cn_id',S.myId);
+
+  if(firebaseReady) {
+    db.ref('.info/connected').on('value',snap=>{
+      // 接続状態確認（表示なし）
+    });
+  }
+}
+
+
+function getNick() {
+  const v=document.getElementById('nick-in').value.trim();
+  if(!v){ toast('ニックネームを入力してください','err'); return null; }
+  S.nick=v; localStorage.setItem('cn_nick',v); return v;
+}
+
+function bindTitle() {
+  document.getElementById('btn-create').addEventListener('click',()=>{
+    if(!getNick()) return; beep('tap'); showScreen('screen-create');
+  });
+  document.getElementById('btn-join').addEventListener('click',()=>{
+    if(!getNick()) return; beep('tap'); resetPin(); showScreen('screen-join');
+  });
+  document.getElementById('btn-public').addEventListener('click',()=>{
+    if(!getNick()) return; beep('tap'); showScreen('screen-rooms'); loadRooms();
+  });
+}
+
+
+const CS={max:8,min:4,time:90};
+function bindCreate() {
+  document.getElementById('create-back').addEventListener('click',()=>{ beep('tap'); showScreen('screen-title'); });
+  makeStepper('mx',v=>CS.max=v,4,16,1,CS.max);
+  makeStepper('mn',v=>CS.min=v,2,8,1,CS.min);
+  makeTimeStepper();
+  document.getElementById('btn-create-ok').addEventListener('click',doCreate);
+
+  // カスタムワードトグル
+  document.getElementById('tog-custom').addEventListener('change',(e)=>{
+    document.getElementById('custom-words-area').style.display=e.target.checked?'block':'none';
+    if(e.target.checked&&document.querySelectorAll('.custom-word-input').length===0){
+      addCustomWordRow(); // 最初の1行を自動追加
+    }
+  });
+
+  // ワード追加ボタン
+  document.getElementById('custom-word-add-btn').addEventListener('click',()=>{
+    const rows=document.querySelectorAll('.custom-word-input');
+    if(rows.length>=10){ toast('最大10語まで追加できます','err'); return; }
+    addCustomWordRow(); beep('tap');
+  });
+}
+
+// カスタムワード1行追加
+function addCustomWordRow(value='') {
+  const list=document.getElementById('custom-word-list');
+  const idx=list.children.length;
+  const row=document.createElement('div');
+  row.className='custom-word-row';
+  row.innerHTML=`
+    <input type="text" class="custom-word-input" placeholder="ワードを入力 (例: 東京タワー)"
+           maxlength="12" value="${value}" autocomplete="off"
+           style="touch-action:auto;user-select:auto">
+    <button class="custom-word-del" onclick="removeCustomWordRow(this)">✕</button>
+  `;
+  list.appendChild(row);
+  updateCustomWordCount();
+  // フォーカス
+  setTimeout(()=>row.querySelector('input').focus(),50);
+}
+
+// カスタムワード1行削除
+function removeCustomWordRow(btn) {
+  btn.closest('.custom-word-row').remove();
+  updateCustomWordCount();
+  beep('tap');
+}
+window.removeCustomWordRow=removeCustomWordRow;
+
+// カスタムワード数カウント更新
+function updateCustomWordCount() {
+  const rows=document.querySelectorAll('.custom-word-input');
+  const cnt=document.getElementById('custom-word-cnt');
+  if(cnt) cnt.textContent=rows.length;
+  // 入力変化を監視
+  rows.forEach(inp=>{ inp.oninput=updateCustomWordCount; });
+}
+
+// カスタムワードを取得（空白除去・重複排除）
+function getCustomWords() {
+  const inputs=document.querySelectorAll('.custom-word-input');
+  const words=[...new Set(
+    [...inputs].map(i=>i.value.trim()).filter(v=>v.length>0)
+  )];
+  return words;
+}
+function makeStepper(pfx,set,mn,mx,step,init) {
+  const el=document.getElementById(`${pfx}-v`);
+  el.textContent=init;
+  document.getElementById(`${pfx}-m`).addEventListener('click',()=>{
+    const v=parseInt(el.textContent); if(v>mn){el.textContent=v-step;set(v-step);beep('tap');}
+  });
+  document.getElementById(`${pfx}-p`).addEventListener('click',()=>{
+    const v=parseInt(el.textContent); if(v<mx){el.textContent=v+step;set(v+step);beep('tap');}
+  });
+}
+function secToDisp(s){
+  const m=Math.floor(s/60), sec=s%60;
+  return m>0 ? `${m}<span style="font-size:10px">分</span>${sec>0?sec+'<span style="font-size:10px">秒</span>':''}` : `${sec}<span style="font-size:10px">秒</span>`;
+}
+function makeTimeStepper() {
+  const el=document.getElementById('tm-v');
+  const upd=v=>{ CS.time=v; el.innerHTML=secToDisp(v); };
+  upd(90);
+  document.getElementById('tm-m').addEventListener('click',()=>{ if(CS.time>30){upd(CS.time-15);beep('tap');} });
+  document.getElementById('tm-p').addEventListener('click',()=>{ if(CS.time<300){upd(CS.time+15);beep('tap');} });
+}
+
+async function doCreate() {
+  const btn=document.getElementById('btn-create-ok');
+  btn.disabled=true;
+  const rid=roomId4();
+  S.roomId=rid; S.isHost=true; S.myTeam=null; S.myRole=null; S.isReady=false;
+  // カスタムワードを収集
+  const useCustom=document.getElementById('tog-custom').checked;
+  const customWords=useCustom?getCustomWords():[];
+
+  S.settings={
+    max:CS.max,min:CS.min,time:CS.time,
+    pub:document.getElementById('tog-pub').checked,
+    hostId:S.myId,hostName:S.nick,
+    status:'waiting',createdAt:Date.now(),
+    customWords,  // カスタムワードリスト
+  };
+  if(firebaseReady) {
+    try {
+      await db.ref(`rooms/${rid}`).set({
+        settings:S.settings,
+        players:{[S.myId]:{id:S.myId,name:S.nick,team:null,role:null,ready:false,host:true,joinedAt:Date.now(),online:true}},
+        game:null,chat:{},typing:{}
+      });
+      db.ref(`rooms/${rid}/players/${S.myId}/online`).onDisconnect().set(false);
+      beep('join'); enterLobby();
+    } catch(e){ showErr('create-err','ルームの作成に失敗しました'); btn.disabled=false; }
+  } else {
+    S.players={[S.myId]:{id:S.myId,name:S.nick,team:null,role:null,ready:false,host:true,joinedAt:Date.now(),online:true}};
+    beep('join'); enterLobby(); btn.disabled=false;
+  }
+}
+
+
+let pin='';
+function resetPin() { pin=''; updatePinUI(); }
+function updatePinUI() {
+  document.getElementById('pin-val').textContent=pin.padEnd(4,'＿').split('').map((c,i)=>i<pin.length?pin[i]:'＿').join('');
+  for(let i=0;i<4;i++) document.getElementById(`pd${i}`).classList.toggle('filled',i<pin.length);
+  document.getElementById('btn-join-ok').disabled=pin.length<4;
+}
+function bindJoin() {
+  document.getElementById('join-back').addEventListener('click',()=>{ beep('tap'); showScreen('screen-title'); });
+  document.getElementById('pinpad').addEventListener('click',e=>{
+    const k=e.target.closest('.pkey');
+    if(!k||k.classList.contains('empty')||k.id==='pin-del') return;
+    if(pin.length<4){pin+=k.dataset.k;updatePinUI();beep('tap');}
+  });
+  document.getElementById('pin-del').addEventListener('click',()=>{ if(pin.length>0){pin=pin.slice(0,-1);updatePinUI();beep('tap');} });
+  document.getElementById('btn-join-ok').addEventListener('click',doJoin);
+}
+async function doJoin(roomIdOverride) {
+  const rid=roomIdOverride||pin;
+  const btn=document.getElementById('btn-join-ok');
+  if(btn) btn.disabled=true;
+  if(!firebaseReady){ toast('オフラインでは参加できません','err'); if(btn)btn.disabled=false; return; }
+  try {
+    const snap=await db.ref(`rooms/${rid}`).once('value');
+    if(!snap.exists()){ showErr('join-err','ルームが見つかりません'); if(btn)btn.disabled=false; return; }
+    const rd=snap.val();
+    const existingMe=rd.players&&rd.players[S.myId];
+    // 復帰者は満員チェック不要、新規参加のみチェック
+    if(!existingMe){
+      const pCount=Object.keys(rd.players||{}).length;
+      if(pCount>=rd.settings.max){ showErr('join-err','このルームは満員です'); if(btn)btn.disabled=false; return; }
+    }
+    // 自分自身を除いた名前重複チェック
+    const names=Object.values(rd.players||{}).filter(p=>p.id!==S.myId).map(p=>p.name);
+    if(names.includes(S.nick)){ showErr('join-err','この名前は既に使われています'); if(btn)btn.disabled=false; return; }
+
+    S.roomId=rid; S.isHost=false; S.settings=rd.settings;
+
+    if(existingMe){
+      // ── 途中復帰：既存の役割・チームを引き継ぐ ──
+      S.myTeam=existingMe.team;
+      S.myRole=existingMe.role;
+      S.isReady=existingMe.ready||false;
+      await db.ref(`rooms/${rid}/players/${S.myId}/online`).set(true);
+      toast('ゲームに復帰しました！','ok');
+    } else {
+      // ── 新規参加：ゲーム中なら参加/観戦を選択 ──
+      S.myTeam=null; S.isReady=false;
+      if(rd.settings.status==='playing'){
+        // 参加/観戦選択ダイアログ
+        const choice=await showJoinModeDialog();
+        if(choice==='cancel'){ if(btn)btn.disabled=false; return; }
+        S.myRole=choice==='spec'?'spectator':'operative';
+        S.specCanSeeColors=false;
+      } else {
+        S.myRole=null;
+      }
+      await db.ref(`rooms/${rid}/players/${S.myId}`).set({
+        id:S.myId,name:S.nick,team:S.myTeam,role:S.myRole,
+        ready:false,host:false,joinedAt:Date.now(),online:true
+      });
+      sysMsg(`${S.nick} が${S.myRole==='spectator'?'観戦で':''}参加しました`);
+    }
+    db.ref(`rooms/${rid}/players/${S.myId}/online`).onDisconnect().set(false);
+    beep('join'); enterLobby();
+  } catch(e){ showErr('join-err','参加に失敗しました'); if(btn)btn.disabled=false; }
+}
+
+
+function bindRooms() {
+  document.getElementById('rooms-back').addEventListener('click',()=>{ beep('tap'); showScreen('screen-title'); });
+  document.getElementById('rooms-ref').addEventListener('click',()=>{ beep('tap'); loadRooms(); });
+}
+async function loadRooms() {
+  const list=document.getElementById('rooms-list');
+  list.innerHTML='<div class="empty-state"><div class="ei">⌛</div><p>読み込み中...</p></div>';
+  if(!firebaseReady){ list.innerHTML='<div class="empty-state"><div class="ei">📡</div><p>オフラインモード</p></div>'; return; }
+  try {
+    const snap=await db.ref('rooms').orderByChild('settings/pub').equalTo(true).limitToLast(20).once('value');
+    const rooms=[];
+    snap.forEach(c=>{ const r=c.val(); if(r.settings&&r.settings.status==='waiting') rooms.push({id:c.key,...r}); });
+    if(!rooms.length){ list.innerHTML='<div class="empty-state"><div class="ei">🔍</div><p>公開ルームがありません</p></div>'; return; }
+    list.innerHTML='';
+    rooms.reverse().forEach(r=>{
+      const pc=Object.keys(r.players||{}).length, mx=r.settings.max, full=pc>=mx;
+      const el=document.createElement('div');
+      el.className='room-item';
+      el.innerHTML=`<div><h3>ROOM #${r.id}</h3><div class="room-meta">Host: ${r.settings.hostName} · ${pc}/${mx}人</div></div><div class="room-badge${full?' full':''}">${full?'満員':'参加可'}</div>`;
+      if(!full) el.addEventListener('click',()=>{ pin=r.id; doJoin(r.id); });
+      list.appendChild(el);
+    });
+  } catch(e){ list.innerHTML='<div class="empty-state"><div class="ei">⚠</div><p>読み込み失敗</p></div>'; }
+}
+
+
+function enterLobby() {
+  showScreen('screen-lobby');
+  document.getElementById('lobby-rid').textContent=S.roomId;
+  if(firebaseReady) subscribeRoom();
+  else updateLobbyUI();
+}
+
+function subscribeRoom() {
+  unsubAll();
+  const rr=db.ref(`rooms/${S.roomId}`);
+  sub(rr.child('players'),'value',snap=>{
+    S.players=snap.val()||{};
+    const me=S.players[S.myId];
+    if(me){ S.myTeam=me.team; S.myRole=me.role; S.isReady=me.ready; S.isHost=!!me.host; }
+    // オフラインプレイヤー除去・ホスト移譲
+    const alive=Object.values(S.players).filter(p=>p.online!==false);
+    const hasHost=alive.some(p=>p.host);
+    if(!hasHost&&alive.length>0) {
+      const nh=alive.sort((a,b)=>a.joinedAt-b.joinedAt)[0];
+      if(nh.id===S.myId) {
+        db.ref(`rooms/${S.roomId}/players/${S.myId}/host`).set(true);
+        S.isHost=true; toast('ホストになりました','ok');
+      }
+    }
+    updateLobbyUI();
+    if(currentScreen()==='screen-game') updateGamePlayersUI();
+  });
+  sub(rr.child('game'),'value',snap=>{
+    const gd=snap.val(); if(!gd) return;
+    const prevTeam = S.game?.currentTeam;
+    S.game=gd;
+    if(gd.phase==='playing'||gd.phase==='hint'||gd.phase==='guess'){
+      if(currentScreen()!=='screen-game') {
+        // 途中復帰・途中参加：ゲーム画面を直接表示
+        S.gameStart=gd.startedAt||Date.now();
+        showScreen('screen-game');
+        updateGameUI();
+        startTimer();
+        // 入室直後にターンバナー表示
+        setTimeout(()=>showTurnBanner(gd.currentTeam), 500);
+      } else {
+        // ターンが変わった瞬間にバナー表示
+        if(prevTeam && prevTeam !== gd.currentTeam) {
+          showTurnBanner(gd.currentTeam);
+        }
+        updateGameUI();
+      }
+    } else if(gd.phase==='ended') showResult();
+    else updateGameUI();
+  });
+  sub(rr.child('chat'),'child_added',snap=>{
+    const m=snap.val(); S.chatLog.push(m);
+    appendChat(m); updateChatPreview(m);
+  });
+  sub(rr.child('typing'),'value',snap=>{
+    const t=snap.val()||{};
+    const who=Object.entries(t).filter(([id,d])=>id!==S.myId&&d.typing&&Date.now()-d.at<3000).map(([id])=>S.players[id]?.name||'?');
+    const el=document.getElementById('g-typing');
+    if(el) el.textContent=who.length?`${who[0]}が入力中...`:'';
+  });
+  sub(rr.child('settings'),'value',snap=>{ if(snap.val()) S.settings=snap.val(); });
+
+  // カード選択状態の同期（全員に表示）
+  sub(rr.child('selections'),'value',snap=>{
+    S.allSelections=snap.val()||{};
+    updateSelectionUI();
+  });
+}
+
+function currentScreen() {
+  const a=document.querySelector('.screen.active');
+  return a?a.id:null;
+}
+
+
+function updateLobbyUI() {
+  const ps=Object.values(S.players);
+  const red=ps.filter(p=>p.team==='red');
+  const blue=ps.filter(p=>p.team==='blue');
+  const unass=ps.filter(p=>!p.team);
+
+  document.getElementById('red-cnt').textContent=`${red.length}人`;
+  document.getElementById('blue-cnt').textContent=`${blue.length}人`;
+  renderTeam('red-ply',red,'red');
+  renderTeam('blue-ply',blue,'blue');
+
+  const ua=document.getElementById('unass-area');
+  const uc=document.getElementById('unass-chips');
+  ua.style.display=unass.length?'block':'none';
+  uc.innerHTML=unass.map(p=>{
+    const isOnline=p.online!==false;
+    return `<div class="pchip" style="width:auto">
+      <div class="pava none">${p.name[0]}</div>
+      <span class="pname" style="font-size:10px">${p.name}${p.id===S.myId?'（自分）':''}</span>
+      <div class="p-online-dot ${isOnline?'on':'off'}"></div>
+    </div>`;
+  }).join('');
+
+  // ホストのみ：開始ボタン
+  const solo=Object.values(S.players).filter(p=>p.online!==false).length<=1;
+  const sb=document.getElementById('btn-start');
+  const rb2=document.getElementById('btn-random-team');
+  if(rb2) rb2.style.display=S.isHost?'block':'none';
+  if(S.isHost){
+    sb.style.display='block';
+    const ok=canStart();
+    sb.disabled=!ok;
+    // 1人プレイは常に開始可能メッセージ
+    sb.textContent=ok?'▶ ゲーム開始':solo?'▶ ゲーム開始（1人）':'両チームにSpymasterが必要';
+  } else sb.style.display='none';
+
+  // チームボタン
+  document.getElementById('btn-red-team').classList.toggle('on',S.myTeam==='red');
+  document.getElementById('btn-blue-team').classList.toggle('on',S.myTeam==='blue');
+
+  // ロールボタン
+  const rrow=document.getElementById('role-row');
+  rrow.style.display=S.myTeam?'flex':'none';
+  if(S.myTeam){
+    const sb2=document.getElementById('btn-spy');
+    const ob=document.getElementById('btn-op');
+    sb2.classList.toggle('on',S.myRole==='spymaster');
+    sb2.classList.toggle(S.myTeam,true);
+    ob.classList.toggle('on',S.myRole==='operative');
+    ob.classList.toggle(S.myTeam,true);
+  }
+}
+function renderTeam(cid,players,team) {
+  document.getElementById(cid).innerHTML=players.map(p=>{
+    const isOnline=p.online!==false;
+    return `
+    <div class="pchip">
+      <div class="pava ${team}">${p.name[0]}</div>
+      <span class="pname">${p.name}${p.id===S.myId?'（自分）':''}</span>
+      ${p.host?'<span class="pcrown">👑</span>':''}
+      <span class="prole${p.role==='spymaster'?' spy':''}">${p.role==='spymaster'?'SPY':p.role==='operative'?'OP':'−'}</span>
+      <div class="p-online-dot ${isOnline?'on':'off'}" title="${isOnline?'オンライン':'オフライン'}"></div>
+    </div>`;
+  }).join('');
+}
+function canStart() {
+  const ps=Object.values(S.players).filter(p=>p.online!==false);
+  // 1人プレイ対応：1人ならそのまま開始OK
+  if(ps.length===1) return true;
+  // 複数人：両チームにSpymasterがいれば開始
+  const rSM=ps.find(p=>p.team==='red'&&p.role==='spymaster');
+  const bSM=ps.find(p=>p.team==='blue'&&p.role==='spymaster');
+  return !!(rSM&&bSM);
+}
+
+
+function bindLobby() {
+  document.getElementById('copy-rid').addEventListener('click',()=>{
+    navigator.clipboard?.writeText(S.roomId).then(()=>toast('コピーしました！','ok'));
+    beep('tap');
+  });
+  document.getElementById('btn-red-team').addEventListener('click',()=>setTeam('red'));
+  document.getElementById('btn-blue-team').addEventListener('click',()=>setTeam('blue'));
+  document.getElementById('btn-spy').addEventListener('click',()=>setRole('spymaster'));
+  document.getElementById('btn-op').addEventListener('click',()=>setRole('operative'));
+  document.getElementById('btn-start').addEventListener('click',startGame);
+  document.getElementById('btn-leave').addEventListener('click',leaveRoom);
+
+  // ランダムチーム割り当て（ホスト専用）
+  document.getElementById('btn-random-team').addEventListener('click',async()=>{
+    const ps=Object.values(S.players).filter(p=>p.online!==false);
+    if(ps.length<2){ toast('2人以上必要です','err'); return; }
+
+    // シャッフルして均等に赤・青に振り分け
+    const shuffled=[...ps].sort(()=>Math.random()-.5);
+    const half=Math.ceil(shuffled.length/2);
+    const updates={};
+    shuffled.forEach((p,i)=>{
+      const team=i<half?'red':'blue';
+      updates[`${p.id}/team`]=team;
+      updates[`${p.id}/role`]=null; // ロールはリセット（自分で選ぶ）
+    });
+
+    if(firebaseReady&&S.roomId){
+      await db.ref(`rooms/${S.roomId}/players`).update(updates);
+    } else {
+      Object.entries(updates).forEach(([path,val])=>{
+        const [id,key]=path.split('/');
+        if(S.players[id]) S.players[id][key]=val;
+      });
+      updateLobbyUI();
+    }
+    toast('🔀 チームをランダムで割り当てました！','ok');
+    beep('tap');
+  });
+  document.getElementById('lobby-chat-prev').addEventListener('click',()=>{openMod('chat-modal');scrollChat();});
+  document.getElementById('lobby-gear').addEventListener('click',()=>{
+    S.isHost?openRSModal():openCfgModal();
+  });
+}
+async function setTeam(t) {
+  S.myTeam=t; S.myRole=null; S.isReady=false; beep('tap');
+  if(firebaseReady) await db.ref(`rooms/${S.roomId}/players/${S.myId}`).update({team:t,role:null,ready:false});
+  else { if(S.players[S.myId]){S.players[S.myId].team=t;S.players[S.myId].role=null;S.players[S.myId].ready=false;} updateLobbyUI(); }
+}
+async function setRole(r) {
+  if(r==='spymaster') {
+    const ex=Object.values(S.players).find(p=>p.team===S.myTeam&&p.role==='spymaster'&&p.id!==S.myId);
+    if(ex){toast('スパイマスターは既に決まっています','err');return;}
+  }
+  S.myRole=r; beep('tap');
+  if(firebaseReady) await db.ref(`rooms/${S.roomId}/players/${S.myId}`).update({role:r});
+  else { if(S.players[S.myId]) S.players[S.myId].role=r; updateLobbyUI(); }
+}
+// toggleReady削除済み
+async function leaveRoom() {
+  if(!S.roomId){showScreen('screen-title');return;}
+  if(firebaseReady) {
+    await db.ref(`rooms/${S.roomId}/players/${S.myId}`).remove();
+    if(S.isHost) {
+      const rem=Object.keys(S.players).filter(id=>id!==S.myId);
+      if(!rem.length) await db.ref(`rooms/${S.roomId}`).remove();
+    }
+  }
+  unsubAll(); clearIv();
+  Object.assign(S,{roomId:null,myTeam:null,myRole:null,isReady:false,isHost:false,players:{},game:null});
+  showScreen('screen-title');
+}
+
+
+async function sysMsg(txt) {
+  const m={type:'sys',text:txt,at:Date.now()};
+  if(firebaseReady&&S.roomId) await db.ref(`rooms/${S.roomId}/chat`).push(m);
+}
+function appendChat(m) {
+  const c=document.getElementById('chat-msgs');
+  if(!c) return;
+  const d=document.createElement('div');
+  if(m.type==='sys'){d.className='cbub sys';d.textContent=m.text;}
+  else {
+    const me=m.sid===S.myId;
+    d.className=`cbub ${me?'me':'them'}`;
+    if(!me){const s=document.createElement('div');s.className='csender';s.textContent=m.sender;d.appendChild(s);}
+    const t=document.createElement('div');t.textContent=m.text;d.appendChild(t);
+  }
+  c.appendChild(d);
+}
+function updateChatPreview(m) {
+  const txt=m.type==='sys'?m.text:`${m.sender}: ${m.text}`;
+  // ロビーのチャットプレビュー
+  const el=document.getElementById('chat-prev-txt');
+  if(el) el.textContent=txt;
+  // ゲーム中のチャットプレビュー
+  const gel=document.getElementById('g-chat-prev-txt');
+  if(gel) gel.textContent=txt;
+}
+function scrollChat() { const c=document.getElementById('chat-msgs'); if(c) setTimeout(()=>c.scrollTop=c.scrollHeight,50); }
+
+
+function bindModals() {
+  // チャット
+  document.getElementById('chat-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeMod('chat-modal');});
+  // ×ボタン
+  document.getElementById('chat-close-btn')?.addEventListener('click',()=>closeMod('chat-modal'));
+  // 下スライドで閉じる
+  (()=>{
+    const sheet=document.getElementById('chat-sheet');
+    const bar=document.getElementById('chat-drag-bar');
+    if(!sheet||!bar) return;
+    let startY=0, startTranslate=0, isDragging=false;
+    const onStart=(e)=>{
+      if(e.target!==bar&&e.target.className!=='modal-bar') return;
+      isDragging=true;
+      startY=e.touches?e.touches[0].clientY:e.clientY;
+      startTranslate=0;
+      sheet.style.transition='none';
+    };
+    const onMove=(e)=>{
+      if(!isDragging) return;
+      const y=(e.touches?e.touches[0].clientY:e.clientY)-startY;
+      if(y<0) return;
+      sheet.style.transform=`translateY(${y}px)`;
+    };
+    const onEnd=(e)=>{
+      if(!isDragging) return;
+      isDragging=false;
+      const y=(e.changedTouches?e.changedTouches[0].clientY:e.clientY)-startY;
+      sheet.style.transition='';
+      if(y>80){
+        sheet.style.transform='translateY(100%)';
+        setTimeout(()=>{ sheet.style.transform=''; closeMod('chat-modal'); },250);
+      } else {
+        sheet.style.transform='';
+      }
+    };
+    bar.addEventListener('touchstart',onStart,{passive:true});
+    document.addEventListener('touchmove',(e)=>{ if(isDragging){ onMove(e); e.stopPropagation(); } },{passive:true});
+    document.addEventListener('touchend',onEnd,{passive:true});
+  })();
+  document.getElementById('chat-send').addEventListener('click',sendChat);
+  document.getElementById('chat-in').addEventListener('keydown',e=>{
+    if(e.key==='Enter')sendChat();
+    if(firebaseReady&&S.roomId){
+      db.ref(`rooms/${S.roomId}/typing/${S.myId}`).set({typing:true,at:Date.now()});
+      clearTimeout(S.typingTO);
+      S.typingTO=setTimeout(()=>db.ref(`rooms/${S.roomId}/typing/${S.myId}`).set({typing:false,at:Date.now()}),2000);
+    }
+  });
+
+  // 設定
+  document.getElementById('cfg-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeMod('cfg-modal');});
+  document.getElementById('cfg-close').addEventListener('click',()=>closeMod('cfg-modal'));
+  // cfg内役割変更ボタン
+  document.getElementById('cfg-team-red')?.addEventListener('click',()=>{ _cfgTeam='red'; updateCfgRoleBtns(); beep('tap'); });
+  document.getElementById('cfg-team-blue')?.addEventListener('click',()=>{ _cfgTeam='blue'; updateCfgRoleBtns(); beep('tap'); });
+  document.getElementById('cfg-role-spy')?.addEventListener('click',()=>{ _cfgRole='spymaster'; updateCfgRoleBtns(); beep('tap'); });
+  document.getElementById('cfg-role-op')?.addEventListener('click',()=>{ _cfgRole='operative'; updateCfgRoleBtns(); beep('tap'); });
+  document.getElementById('cfg-role-save')?.addEventListener('click',async()=>{
+    if(!_cfgTeam||!_cfgRole) return;
+    S.myTeam=_cfgTeam; S.myRole=_cfgRole;
+    if(firebaseReady&&S.roomId) await db.ref(`rooms/${S.roomId}/players/${S.myId}`).update({team:_cfgTeam,role:_cfgRole});
+    else if(S.players[S.myId]){S.players[S.myId].team=_cfgTeam;S.players[S.myId].role=_cfgRole;}
+    closeMod('cfg-modal'); updateJoinBar(); updateGameUI(); beep('tap');
+    toast(`${_cfgTeam==='red'?'🔴 Red':'🔵 Blue'} ${_cfgRole==='spymaster'?'Spymaster':'Operative'} に変更しました`,'ok');
+  });
+  document.getElementById('cfg-to-spec')?.addEventListener('click',async()=>{
+    S.myRole='spectator'; S.myTeam=null; S.specCanSeeColors=false;
+    if(firebaseReady&&S.roomId) await db.ref(`rooms/${S.roomId}/players/${S.myId}`).update({role:'spectator',team:null});
+    else if(S.players[S.myId]){S.players[S.myId].role='spectator';S.players[S.myId].team=null;}
+    closeMod('cfg-modal'); updateJoinBar(); updateGameUI(); beep('tap');
+    toast('👀 観戦モードに切り替えました');
+  });
+  document.getElementById('sfx-tog').addEventListener('change',e=>S.sfx=e.target.checked);
+  document.getElementById('anim-tog').addEventListener('change',e=>S.anim=e.target.checked);
+  document.getElementById('btn-save-nick').addEventListener('click',async()=>{
+    const n=document.getElementById('cfg-nick').value.trim();
+    if(!n) return;
+    const names=Object.values(S.players).filter(p=>p.id!==S.myId).map(p=>p.name);
+    if(names.includes(n)){toast('この名前は既に使われています','err');return;}
+    S.nick=n; localStorage.setItem('cn_nick',n);
+    if(firebaseReady&&S.roomId) await db.ref(`rooms/${S.roomId}/players/${S.myId}/name`).set(n);
+    toast('名前を変更しました','ok');
+  });
+  document.getElementById('g-gear').addEventListener('click',openCfgModal);
+
+  // キーカード
+
+  // ルーム設定
+  document.getElementById('rsettings-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeMod('rsettings-modal');});
+  document.getElementById('rs-cancel').addEventListener('click',()=>closeMod('rsettings-modal'));
+  document.getElementById('rs-save').addEventListener('click',saveRS);
+  makeRSStepper('rs-mx','max',4,16,1);
+
+  // cfg-modal 内のルーム設定ステッパー
+  makeRSStepper('cfg-mx','max',4,16,1);
+  let cfgTmVal=90;
+  const cfgTmEl=document.getElementById('cfg-tm-v');
+  document.getElementById('cfg-tm-m')?.addEventListener('click',()=>{ cfgTmVal=window._cfgTmVal||cfgTmVal; if(cfgTmVal>30){cfgTmVal-=15;window._cfgTmVal=cfgTmVal;cfgTmEl.innerHTML=secToDisp(cfgTmVal);beep('tap');} });
+  document.getElementById('cfg-tm-p')?.addEventListener('click',()=>{ cfgTmVal=window._cfgTmVal||cfgTmVal; if(cfgTmVal<300){cfgTmVal+=15;window._cfgTmVal=cfgTmVal;cfgTmEl.innerHTML=secToDisp(cfgTmVal);beep('tap');} });
+  document.getElementById('cfg-rs-save')?.addEventListener('click',async()=>{
+    const upd={
+      max:parseInt(document.getElementById('cfg-mx-v').textContent),
+      time:window._cfgTmVal||cfgTmVal,
+      pub:document.getElementById('cfg-pub-tog').checked
+    };
+    S.settings={...S.settings,...upd};
+    if(firebaseReady&&S.roomId) await db.ref(`rooms/${S.roomId}/settings`).update(upd);
+    toast('ルーム設定を保存しました','ok');
+    beep('tap');
+  });
+  // rs-tm は専用ステッパー（分:秒表示）
+  const rsTmEl=document.getElementById('rs-tm-v');
+  let rsTmVal=90;
+  document.getElementById('rs-tm-m').addEventListener('click',()=>{ if(rsTmVal>30){rsTmVal-=15;rsTmEl.innerHTML=secToDisp(rsTmVal);beep('tap');} });
+  document.getElementById('rs-tm-p').addEventListener('click',()=>{ if(rsTmVal<300){rsTmVal+=15;rsTmEl.innerHTML=secToDisp(rsTmVal);beep('tap');} });
+  // saveRS で rsTmVal を使う
+  document.getElementById('rs-save').removeEventListener('click',saveRS);
+  document.getElementById('rs-save').addEventListener('click',async()=>{
+    const upd={max:parseInt(document.getElementById('rs-mx-v').textContent),time:rsTmVal,pub:document.getElementById('rs-pub-tog').checked};
+    S.settings={...S.settings,...upd};
+    if(firebaseReady&&S.roomId) await db.ref(`rooms/${S.roomId}/settings`).update(upd);
+    closeMod('rsettings-modal'); toast('設定を保存しました','ok');
+  });
+}
+function makeRSStepper(pfx,key,mn,mx,step) {
+  const el=document.getElementById(`${pfx}-v`);
+  document.getElementById(`${pfx}-m`).addEventListener('click',()=>{ const v=parseInt(el.textContent); if(v>mn){el.textContent=v-step;beep('tap');} });
+  document.getElementById(`${pfx}-p`).addEventListener('click',()=>{ const v=parseInt(el.textContent); if(v<mx){el.textContent=v+step;beep('tap');} });
+}
+async function saveRS() {
+  const upd={max:parseInt(document.getElementById('rs-mx-v').textContent),time:parseInt(document.getElementById('rs-tm-v').textContent),pub:document.getElementById('rs-pub-tog').checked};
+  S.settings={...S.settings,...upd};
+  if(firebaseReady&&S.roomId) await db.ref(`rooms/${S.roomId}/settings`).update(upd);
+  closeMod('rsettings-modal'); toast('設定を保存しました','ok');
+}
+// cfg役割変更の選択状態
+let _cfgTeam=null, _cfgRole=null;
+function openCfgModal() {
+  document.getElementById('cfg-nick').value=S.nick;
+  document.getElementById('sfx-tog').checked=S.sfx;
+  document.getElementById('anim-tog').checked=S.anim;
+  const hp=document.getElementById('host-panel');
+  hp.style.display=S.isHost?'block':'none';
+  if(S.isHost){
+    document.getElementById('cfg-mx-v').textContent=S.settings.max||8;
+    const ct=S.settings.time||90;
+    document.getElementById('cfg-tm-v').innerHTML=secToDisp(ct);
+    document.getElementById('cfg-pub-tog').checked=S.settings.pub!==false;
+    window._cfgTmVal=ct;
+  }
+  // 役割変更セクション：ゲーム中・多人数時のみ表示
+  const roleSec=document.getElementById('cfg-role-sec');
+  const inGame=currentScreen()==='screen-game';
+  const solo=Object.values(S.players).filter(p=>p.online!==false).length<=1;
+  const me=S.players[S.myId];
+  const isSpec=(me?.role||S.myRole)==='spectator';
+  if(roleSec){
+    roleSec.style.display=(inGame&&!solo)?'block':'none';
+    if(inGame&&!solo){
+      // 現在の選択状態をリセット
+      _cfgTeam=me?.team||S.myTeam||null;
+      _cfgRole=me?.role||S.myRole||null;
+      updateCfgRoleBtns();
+      // 観戦ボタン：観戦中は非表示
+      const specRow=document.getElementById('cfg-to-spec');
+      if(specRow) specRow.style.display=isSpec?'none':'block';
+    }
+  }
+  if(S.isHost) {
+    document.getElementById('host-list').innerHTML=Object.values(S.players).filter(p=>p.id!==S.myId).map(p=>
+      `<div style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);gap:10px">
+        <div class="pava ${p.team||'none'}">${p.name[0]}</div>
+        <span style="flex:1;font-size:13px;color:var(--text)">${p.name}</span>
+        <button onclick="kickP('${p.id}','${p.name}')" style="padding:3px 9px;border-radius:3px;background:rgba(192,57,43,.12);border:1px solid rgba(192,57,43,.3);color:#e87c7c;font-size:10px;cursor:pointer;font-family:var(--font);letter-spacing:.5px">KICK</button>
+      </div>`).join('')||'<p style="color:var(--text-dim);font-size:12px;padding:8px 0">他のプレイヤーはいません</p>';
+  }
+  openMod('cfg-modal');
+}
+async function kickP(id,name) {
+  if(!confirm(`${name}をキックしますか？`)) return;
+  if(firebaseReady&&S.roomId) {
+    await db.ref(`rooms/${S.roomId}/players/${id}`).remove();
+    sysMsg(`${name} がキックされました`);
+    toast(`${name}をキックしました`);
+  }
+}
+window.kickP=kickP;
+function openRSModal() {
+  document.getElementById('rs-mx-v').textContent=S.settings.max||8;
+  document.getElementById('rs-tm-v').innerHTML=secToDisp(S.settings.time||90);
+  document.getElementById('rs-pub-tog').checked=S.settings.pub!==false;
+  openMod('rsettings-modal');
+}
+async function sendChat() {
+  const inp=document.getElementById('chat-in');
+  const txt=inp.value.trim(); if(!txt) return;
+  inp.value='';
+  const m={type:'chat',text:txt,sender:S.nick,sid:S.myId,at:Date.now()};
+  if(firebaseReady&&S.roomId) await db.ref(`rooms/${S.roomId}/chat`).push(m);
+  else { appendChat(m); updateChatPreview(m); }
+  scrollChat();
+}
+
+
+async function startGame() {
+  // カスタムワード取得（Firebaseから、またはルーム設定から）
+  const customWords=S.settings.customWords||[];
+  let wordPool;
+  if(customWords.length>0){
+    // カスタムワード＋デフォルトをシャッフルして25語選ぶ
+    const combined=[...new Set([...customWords,...shuffle(WORDS)])];
+    wordPool=combined.slice(0,25);
+  } else {
+    wordPool=shuffle(WORDS).slice(0,25);
+  }
+  const words=wordPool;
+  const first=Math.random()<.5?'red':'blue';
+  const second=first==='red'?'blue':'red';
+  const types=[...Array(9).fill(first),...Array(8).fill(second),...Array(7).fill('neutral'),'assassin'];
+  const km=shuffle(types);
+  const cards=words.map((w,i)=>({word:w,type:km[i],revealed:false,revealedBy:null}));
+  const gd={
+    cards,keyMap:km,
+    firstTeam:first,currentTeam:first,
+    phase:'hint',
+    currentHint:null,
+    guessesLeft:0,
+    guessedThisTurn:0,
+    redRemaining:first==='red'?9:8,
+    blueRemaining:first==='blue'?9:8,
+    winner:null,winReason:null,
+    startedAt:Date.now(),turnCount:0,turnStartAt:Date.now()
+  };
+  if(firebaseReady) {
+    await db.ref(`rooms/${S.roomId}/game`).set(gd);
+    await db.ref(`rooms/${S.roomId}/settings/status`).set('playing');
+  } else { S.game=gd; startGameScreen(); }
+}
+
+
+function startGameScreen() {
+  S.gameStart=S.game.startedAt||Date.now();
+  showScreen('screen-game');
+  runCD(()=>{
+    updateGameUI();
+    startTimer();
+    // ゲーム開始時：先攻チームをバナーで表示
+    setTimeout(()=>showTurnBanner(S.game.currentTeam), 300);
+  });
+}
+function runCD(cb) {
+  // カウントダウンなし：即開始
+  cb();
+}
+
+function updateGameUI() {
+  if(!S.game) return;
+  const g=S.game;
+  const me=S.players[S.myId];
+  // ▼ 原作の核心：役割はローカル状態で自由に変更できる
+  // 1人プレイ時は役割未設定でもSpymasterとして扱う（全操作可能）
+  const solo=Object.values(S.players).filter(p=>p.online!==false).length<=1;
+  const myTeam=me?.team||S.myTeam||(solo?g.currentTeam:null);
+  const myRole=me?.role||S.myRole||(solo?'spymaster':null);
+  const isSpy=myRole==='spymaster';
+  const isSpec=myRole==='spectator';
+  // 1人プレイは常に自分のターン（全チームを操作）
+  const isMyTurn=solo||g.currentTeam===myTeam;
+
+  // スコア
+  document.getElementById('sc-red-n').textContent=g.redRemaining;
+  document.getElementById('sc-blue-n').textContent=g.blueRemaining;
+  const sr=document.getElementById('sc-red'), sb=document.getElementById('sc-blue');
+  sr.classList.toggle('turn',g.currentTeam==='red');
+  sb.classList.toggle('turn',g.currentTeam==='blue');
+  sr.classList.toggle('first',g.firstTeam==='red');
+  sb.classList.toggle('first',g.firstTeam==='blue');
+  // 外枠をターンチームカラーに
+  const gameEl=document.getElementById('screen-game');
+  gameEl.classList.toggle('turn-red',  g.currentTeam==='red');
+  gameEl.classList.toggle('turn-blue', g.currentTeam==='blue');
+
+  // ロールバッジ
+  const rb=document.getElementById('g-role');
+  if(isSpy){ rb.className=`g-role spy-${myTeam}`; rb.textContent=`👁 Spymaster (${myTeam==='red'?'Red':'Blue'})`; }
+  else if(isSpec){ rb.className='g-role spec'; rb.textContent='👀 Spectator'; }
+  else { rb.className=`g-role op-${myTeam}`; rb.textContent=`🕵 Operative (${myTeam==='red'?'Red':'Blue'})`; }
+
+  // ヒントバー
+  const hi=document.getElementById('g-hinfo');
+  const hl=document.getElementById('g-hleft');
+  if(g.currentHint){
+    const tc=g.currentTeam;
+    const dc=(g.currentHint.count===0||g.currentHint.displayCount==='∞')?'∞':String(g.currentHint.count);
+    const cl=g.currentTeam==='red'?'#f1948a':'#7fb3d3';
+    hi.innerHTML=`<div class="g-hw" style="color:${cl}">${g.currentHint.word}</div><div class="g-hcnt ${tc}">${dc}</div>`;
+    hl.textContent=g.guessesLeft===-1?'残り∞回':`残り ${g.guessesLeft} 回`;
+  } else {
+    hi.innerHTML=`<span class="g-hwait">${g.currentTeam==='red'?'Red':'Blue'} Team のスパイマスターがヒントを考えています...</span>`;
+    hl.textContent='';
+  }
+
+  // カードグリッド描画
+  renderGrid(g,isSpy,isSpec);
+
+  // アクションバー
+  const ab=document.getElementById('g-actbar');
+  const hi2=document.getElementById('g-hintinput');
+  const hs=document.getElementById('g-hsub');
+
+  // 観戦者：色見える場合はスパイマスター視点（操作不可）
+  const specCanSee = S.specCanSeeColors !== false;
+  const effectiveSpy = isSpy || (isSpec && specCanSee);
+
+  if(isSpec){
+    ab.style.display='none'; hi2.style.display='none';
+  } else if(!solo&&!isMyTurn){
+    ab.style.display='none'; hi2.style.display='none';
+  } else if(isSpy&&g.phase==='hint'){
+    hi2.style.display='block'; ab.style.display='none';
+    hs.className=`g-hsub ${myTeam}`;
+  } else if(!isSpy&&g.phase==='guess'){
+    ab.style.display='flex'; hi2.style.display='none';
+    const etb=document.getElementById('btn-endturn');
+    const gt=g.guessedThisTurn||0;
+    etb.disabled=(!solo&&gt<1);
+    etb.textContent=(!solo&&gt<1)?`End Turn (1枚選んで)`:'End Turn';
+  } else { ab.style.display='none'; hi2.style.display='none'; }
+
+  // g-join-barを更新
+  updateJoinBar();
+
+  // プレイヤー一覧更新
+  updatePlayersBar();
+
+  // 役割切替バー（全員に表示）
+  const swBar=document.getElementById('g-switchbar');
+  if(swBar){
+    swBar.style.display=isSpec?'none':'flex';
+    if(solo){
+      ['sw-spy-red','sw-op-red','sw-spy-blue','sw-op-blue'].forEach(id=>{
+        const btn=document.getElementById(id); if(!btn) return;
+        btn.classList.remove('active-role');
+        const bTeam=id.includes('red')?'red':'blue';
+        const bSpy=id.includes('spy');
+        if(myTeam===bTeam&&((isSpy&&bSpy)||(!isSpy&&!isSpec&&!bSpy))) btn.classList.add('active-role');
+      });
+      const ets=document.getElementById('btn-endturn-solo');
+      if(ets){
+        const showET=!isSpy&&!isSpec&&g.phase==='guess';
+        ets.style.display=showET?'block':'none';
+        const gt=g.guessedThisTurn||0;
+        ets.disabled=gt<1;
+        ets.className='g-endturn-solo'+(showET&&gt>=1?' active':'');
+        ets.textContent=gt<1?'まず1枚選んで':'End Turn →';
+      }
+    }
+  }
+}
+
+// 選択ハイライトを更新（名前カード方式・全員白背景）
+function updateSelectionUI(){
+  if(currentScreen()!=='screen-game') return;
+  const MAX=4; // 最大表示枚数
+  document.querySelectorAll('.crd').forEach((el,i)=>{
+    const mine=S.selectedCards.has(i);
+    const others=Object.entries(S.allSelections||{})
+      .filter(([pid,d])=>pid!==S.myId&&Number(d.idx)===i)
+      .map(([,d])=>d.name);
+
+    // ハイライト枠
+    el.classList.toggle('selected', mine&&others.length===0);
+    el.classList.toggle('selected-other', others.length>0&&!mine);
+    el.classList.toggle('selected-both', mine&&others.length>0);
+
+    // 名前コンテナを更新
+    let container=el.querySelector('.crd-names');
+    const all=[...(mine?[S.nick]:[]),...others];
+
+    if(all.length>0){
+      if(!container){
+        container=document.createElement('div');
+        container.className='crd-names';
+        el.appendChild(container);
+      }
+      container.innerHTML='';
+      const shown=all.length<=MAX ? all : all.slice(0,MAX-1);
+      shown.forEach(name=>{
+        const tag=document.createElement('span');
+        tag.className='crd-name-tag';
+        tag.textContent=name;
+        container.appendChild(tag);
+      });
+      if(all.length>MAX){
+        const more=document.createElement('span');
+        more.className='crd-name-tag';
+        more.textContent=`+${all.length-(MAX-1)}`;
+        container.appendChild(more);
+      }
+    } else {
+      if(container) container.remove();
+    }
+  });
+}
+
+function renderGrid(g,isSpy,isSpec) {
+  const grid=document.getElementById('g-grid');
+  grid.innerHTML='';
+  // 観戦者の実効視点を計算
+  const specSeeColors = S.specCanSeeColors !== false;
+  const effectiveSpyView = isSpy || (isSpec && specSeeColors);
+
+  g.cards.forEach((card,i)=>{
+    const tClass=card.type==='neutral'?'neut':card.type==='assassin'?'ass':card.type;
+
+    const div=document.createElement('div');
+    div.className=`crd${card.revealed?' rev t-'+tClass:''}`;
+
+    // スパイマスター or 色見える観戦者：ヒント枠表示
+    if(!card.revealed&&effectiveSpyView){
+      const hmap={red:'hint-red',blue:'hint-blue',neutral:'hint-neut',assassin:'hint-ass'};
+      div.classList.add(hmap[card.type]||'');
+    }
+
+    // crd-inner 1枚構成（フリップなし、その場で色変化）
+    const inner=document.createElement('div');
+    inner.className='crd-inner';
+    const fontSize = card.word.length >= 5 ? 'font-size:clamp(8px,2.2vw,11px)' : '';
+    inner.innerHTML=`<span class="crd-w" style="${fontSize}">${card.word}</span>`;
+    div.appendChild(inner);
+
+    div.addEventListener('click',()=>onCardTap(i,card));
+    grid.appendChild(div);
+  });
+  // レンダリング後に選択状態を反映
+  updateSelectionUI();
+}
+
+// 1タップ→選択、再タップ→ポップアップ
+function onCardTap(idx,card) {
+  if(!S.game||card.revealed) return;
+  const g=S.game;
+  if(g.phase!=='guess'){toast('Spymasterのヒントを待っています','err');return;}
+  const me=S.players[S.myId];
+  const myTeam=me?.team||S.myTeam;
+  const myRole=me?.role||S.myRole;
+  const solo=Object.values(S.players).filter(p=>p.online!==false).length<=1;
+  // スパイマスターは常にカード選択不可（ソロでも）
+  if(myRole==='spymaster'){toast('Spymasterはカードを選べません','err');return;}
+  if(!solo&&myRole!=='operative'){toast('Operativeのみカードを選べます','err');return;}
+  if(!solo&&g.currentTeam!==myTeam){toast('あなたのチームのターンではありません','err');return;}
+  if(g.guessesLeft!==-1&&g.guessesLeft<=0){toast('残り回数がありません','err');return;}
+  beep('tap');
+  if(S.selectedCards.has(idx)){
+    openCardPopup(idx,card); // 再タップ→ポップアップ
+  } else {
+    S.selectedCards.add(idx); // 初タップ→選択
+    updateSelectionUI();
+    // Firebase に選択状態を書き込み（全員に見せる）
+    if(firebaseReady&&S.roomId){
+      db.ref(`rooms/${S.roomId}/selections/${S.myId}`).set({
+        idx, name:S.nick, team:S.myTeam||S.game?.currentTeam||'red', at:Date.now()
+      });
+    }
+  }
+}
+
+// ポップアップ開く
+function openCardPopup(idx,card){
+  const team=S.game?.currentTeam||'red';
+  document.getElementById('popup-word').textContent=card.word;
+  const gb=document.getElementById('popup-guess-btn');
+  gb.className=`popup-guess-btn ${team}`;
+  gb.textContent=`✓ Guess "${card.word}"`;
+  gb.dataset.idx=String(idx);
+  document.getElementById('popup-desel-btn').dataset.idx=String(idx);
+  document.getElementById('card-popup-ov').classList.add('open');
+}
+function closeCardPopup(){
+  document.getElementById('card-popup-ov').classList.remove('open');
+}
+
+// カード開示の実処理
+async function revealCard(idx){
+  const g=S.game;
+  const card=g.cards[idx];
+  if(!card||card.revealed) return;
+  const upd=[...g.cards]; upd[idx]={...card,revealed:true,revealedBy:S.myId};
+  let ng={...g,cards:upd,guessedThisTurn:(g.guessedThisTurn||0)+1};
+  if(card.type==='assassin'){
+    const w=g.currentTeam==='red'?'blue':'red';
+    ng={...ng,winner:w,winReason:'assassin',phase:'ended'};
+    beep('ass'); if(S.anim) triggerAss(); shakeCard(idx);
+  } else if(card.type===g.currentTeam){
+    const rk=g.currentTeam==='red'?'redRemaining':'blueRemaining';
+    ng[rk]=g[rk]-1;
+    if(ng[rk]===0){
+      ng={...ng,winner:g.currentTeam,winReason:'allFound',phase:'ended'}; beep('win');
+    } else if(g.guessesLeft!==-1){
+      ng.guessesLeft=g.guessesLeft-1;
+      if(ng.guessesLeft===0){ ng=doEndTurn(ng,'overGuess'); beep('ng'); }
+      else { beep('ok'); if(S.anim) showCombo(); }
+    } else { beep('ok'); if(S.anim) showCombo(); }
+  } else {
+    if(card.type!=='neutral'){
+      const ok=card.type==='red'?'redRemaining':'blueRemaining';
+      ng[ok]=g[ok]-1;
+      if(ng[ok]===0){
+        ng={...ng,winner:card.type,winReason:'allFound',phase:'ended'}; beep('win');
+      } else {
+        ng=doEndTurn(ng,'opponent'); beep('ng'); shakeCard(idx);
+      }
+    } else {
+      ng=doEndTurn(ng,'neutral'); beep('ng'); shakeCard(idx);
+    }
+  }
+  ng.turnCount=g.turnCount||0;
+  if(firebaseReady){
+    await db.ref(`rooms/${S.roomId}/game`).update(ng);
+    if(ng.phase==='ended') await db.ref(`rooms/${S.roomId}/settings/status`).set('ended');
+  } else { S.game=ng; updateGameUI(); if(ng.phase==='ended') showResult(); }
+}
+
+function doEndTurn(g, reason='wrong') {
+  clearIv();
+  S.selectedCards.clear();
+  if(firebaseReady&&S.roomId) db.ref(`rooms/${S.roomId}/selections/${S.myId}`).remove();
+  const next=g.currentTeam==='red'?'blue':'red';
+  // ターン終了バナー
+  if(reason!=='timer') setTimeout(()=>showEndTurnBanner(reason), 100);
+  // 次チームバナー
+  setTimeout(()=>showTurnBanner(next), reason==='timer'?100:1200);
+  // 1人プレイ：次チームのSpymasterに自動切替
+  const soloE=Object.values(S.players).filter(p=>p.online!==false).length<=1;
+  if(soloE){
+    S.myTeam=next; S.myRole='spymaster';
+    if(firebaseReady&&S.roomId) db.ref(`rooms/${S.roomId}/players/${S.myId}`).update({team:next,role:'spymaster'});
+    else if(S.players[S.myId]){S.players[S.myId].team=next;S.players[S.myId].role='spymaster';}
+  }
+  return {...g,currentTeam:next,phase:'hint',currentHint:null,guessesLeft:0,guessedThisTurn:0,turnCount:(g.turnCount||0)+1,turnStartAt:Date.now()};
+}
+
+function bindGame() {
+  bindJoinBar(); // 観戦/参加バーのイベント
+  // 役割切替ボタン（1人プレイ専用）
+  const swMap={'sw-spy-red':{team:'red',role:'spymaster'},'sw-op-red':{team:'red',role:'operative'},'sw-spy-blue':{team:'blue',role:'spymaster'},'sw-op-blue':{team:'blue',role:'operative'}};
+  Object.entries(swMap).forEach(([id,{team,role}])=>{
+    document.getElementById(id)?.addEventListener('click',async()=>{
+      S.myTeam=team; S.myRole=role; beep('tap');
+      if(firebaseReady&&S.roomId) await db.ref(`rooms/${S.roomId}/players/${S.myId}`).update({team,role});
+      else if(S.players[S.myId]){S.players[S.myId].team=team;S.players[S.myId].role=role;}
+      updateGameUI();
+    });
+  });
+  // End Turn ソロボタン
+  document.getElementById('btn-endturn-solo')?.addEventListener('click',async()=>{
+    if(!S.game) return;
+    const gt=S.game.guessedThisTurn||0;
+    if(gt<1){toast('まず1枚カードを選んでください','err');return;}
+    const ng=doEndTurn(S.game); beep('tap');
+    if(firebaseReady) await db.ref(`rooms/${S.roomId}/game`).update(ng);
+    else{S.game=ng;updateGameUI();}
+  });
+
+  // ポップアップ：Guessボタン
+  document.getElementById('popup-guess-btn')?.addEventListener('click',async()=>{
+    const idx=parseInt(document.getElementById('popup-guess-btn').dataset.idx);
+    closeCardPopup();
+    S.selectedCards.delete(idx);
+    if(firebaseReady&&S.roomId) db.ref(`rooms/${S.roomId}/selections/${S.myId}`).remove();
+    updateSelectionUI();
+    await revealCard(idx);
+  });
+  // ポップアップ：選択解除ボタン
+  document.getElementById('popup-desel-btn')?.addEventListener('click',()=>{
+    const idx=parseInt(document.getElementById('popup-desel-btn').dataset.idx);
+    S.selectedCards.delete(idx);
+    if(firebaseReady&&S.roomId) db.ref(`rooms/${S.roomId}/selections/${S.myId}`).remove();
+    updateSelectionUI();
+    closeCardPopup(); beep('tap');
+  });
+  // ポップアップ：閉じるボタン
+  document.getElementById('popup-close-btn')?.addEventListener('click',()=>{
+    closeCardPopup(); beep('tap');
+  });
+  // オーバーレイタップで閉じる
+  document.getElementById('card-popup-ov')?.addEventListener('click',(e)=>{
+    if(e.target===e.currentTarget) closeCardPopup();
+  });
+
+  // End Turn
+  document.getElementById('btn-endturn').addEventListener('click',async()=>{
+    if(!S.game) return;
+    const g=S.game;
+    const soloET=Object.values(S.players).filter(p=>p.online!==false).length<=1;
+    if(!soloET&&(g.guessedThisTurn||0)<1){toast('まず1枚カードを選んでください','err');return;}
+    const ng=doEndTurn(g); beep('tap');
+    if(firebaseReady) await db.ref(`rooms/${S.roomId}/game`).update(ng);
+    else { S.game=ng; updateGameUI(); }
+  });
+  // Give Clue
+  document.getElementById('g-hsub').addEventListener('click',giveClue);
+  document.getElementById('g-hw-in').addEventListener('keydown',e=>{if(e.key==='Enter')giveClue();});
+  // キーカード
+}
+async function giveClue() {
+  const w=document.getElementById('g-hw-in').value.trim();
+  const cv=document.getElementById('g-hnum').value;
+  const cnt=cv==='∞'?0:parseInt(cv);
+  const isInf=cnt===0;
+  if(!w){toast('ヒントワードを入力してください','err');return;}
+  if(!/^\S+$/.test(w)){toast('1単語で入力してください','err');return;}
+  const bWords=S.game.cards.filter(c=>!c.revealed).map(c=>c.word.toLowerCase());
+  if(bWords.includes(w.toLowerCase())){toast('ボード上の単語は使えません','err');return;}
+  const hint={word:w.toUpperCase(),count:cnt,displayCount:isInf?'∞':String(cnt)};
+  const ng={...S.game,currentHint:hint,phase:'guess',guessesLeft:isInf?-1:cnt+1,guessedThisTurn:0};
+  document.getElementById('g-hw-in').value='';
+  beep('tap');
+  if(firebaseReady) await db.ref(`rooms/${S.roomId}/game`).update(ng);
+  else { S.game=ng; updateGameUI(); }
+}
+
+
+function startTimer() {
+  clearIv();
+  const lim=S.settings.time||90;
+  const el=document.getElementById('g-timer');
+  const tick=()=>{
+    if(!S.game||S.game.phase==='ended'){clearIv();return;}
+    const elapsed=Math.floor((Date.now()-(S.game.turnStartAt||Date.now()))/1000);
+    const rem=lim-elapsed;
+    if(rem<=0){
+      el.textContent='0:00'; el.classList.add('warn');
+      if(S.isHost){
+        const ng=doEndTurn(S.game,'timer');
+        if(firebaseReady) db.ref(`rooms/${S.roomId}/game`).update(ng);
+        else{S.game=ng;updateGameUI();}
+      }
+      clearIv();
+    } else {
+      el.textContent=fmtSec(rem);
+      el.classList.toggle('warn',rem<=15);
+    }
+  };
+  S.timerIv=setInterval(tick,1000); tick();
+}
+function clearIv() { if(S.timerIv){clearInterval(S.timerIv);S.timerIv=null;} }
+function updateGamePlayersUI() { if(currentScreen()==='screen-game') updateGameUI(); }
+
+
+function triggerAss() {
+  const o=document.getElementById('ass-ov');
+  o.classList.remove('flash'); void o.offsetWidth; o.classList.add('flash');
+  setTimeout(()=>o.classList.remove('flash'),1200);
+}
+function showCombo() {
+  const el=document.getElementById('combo');
+  const list=['👏','🎯','✨','💥','🔥','⚡'];
+  el.textContent=list[Math.floor(Math.random()*list.length)]+' Nice!';
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+function spawnConfetti() {
+  if(!S.anim) return;
+  const cols=['#c0392b','#2471a3','#e2a800','#2ecc71','#e74c3c'];
+  for(let i=0;i<55;i++){
+    setTimeout(()=>{
+      const p=document.createElement('div');
+      p.className='cfetti';
+      p.style.cssText=`left:${Math.random()*100}%;background:${cols[Math.floor(Math.random()*cols.length)]};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*.4}s;width:${4+Math.random()*7}px;height:${4+Math.random()*7}px;border-radius:${Math.random()>.5?'50%':'2px'};transform:rotate(${Math.random()*360}deg)`;
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(),4000);
+    },i*25);
+  }
+}
+
+
+function showResult() {
+  if(!S.game) return;
+  clearIv();
+  const g=S.game, w=g.winner;
+  document.getElementById('res-badge').textContent=`${w==='red'?'🔴 Red':'🔵 Blue'} Team の勝利！`;
+  document.getElementById('res-badge').className=`res-badge ${w}`;
+  document.getElementById('res-name').textContent=w==='red'?'Red Team':'Blue Team';
+  document.getElementById('res-name').className=`res-name ${w}`;
+  document.getElementById('res-reason').textContent={allFound:'全エージェントを発見しました！',assassin:'暗殺者カードを踏んでしまいました...',}[g.winReason]||'';
+  document.getElementById('stat-red').textContent=g.redRemaining;
+  document.getElementById('stat-blue').textContent=g.blueRemaining;
+  document.getElementById('stat-time').textContent=fmtMs(Date.now()-S.gameStart);
+  document.getElementById('stat-turns').textContent=`${g.turnCount||0}回`;
+  showScreen('screen-result');
+  beep('win'); spawnConfetti();
+}
+
+function bindResult() {
+  document.getElementById('btn-again').addEventListener('click',async()=>{
+    if(S.isHost){
+      if(firebaseReady&&S.roomId){
+        await db.ref(`rooms/${S.roomId}/game`).set(null);
+        await db.ref(`rooms/${S.roomId}/settings/status`).set('waiting');
+        const upd={};
+        Object.keys(S.players).forEach(id=>upd[`${id}/ready`]=false);
+        await db.ref(`rooms/${S.roomId}/players`).update(upd);
+      } else {
+        S.game=null;
+        Object.keys(S.players).forEach(id=>{if(S.players[id])S.players[id].ready=false;});
+      }
+      enterLobby();
+    } else toast('ホストがゲームを再開するまでお待ちください');
+  });
+  document.getElementById('btn-lobby').addEventListener('click',enterLobby);
+  document.getElementById('btn-res-leave').addEventListener('click',leaveRoom);
+}
+
+
+window.addEventListener('beforeunload',()=>{
+  if(firebaseReady&&S.roomId) db.ref(`rooms/${S.roomId}/players/${S.myId}/online`).set(false);
+});
+
+
+document.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('selectstart',e=>e.preventDefault());
+document.addEventListener('touchstart',e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
+// ダブルタップズームはviewport meta で防止済み（touchend削除）
+document.addEventListener('touchmove',e=>{
+  // スクロールエリア・セレクト・入力欄は許可
+  if(e.target.closest('.scroll-area,.modal-body,.modal-scroll,.chat-msgs,.tut-content')) return;
+  if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  e.preventDefault();
+},{passive:false});
+
+
+function updateGameChatPreview(msg) {
+  const el=document.getElementById('g-chat-prev-txt');
+  if(!el) return;
+  if(msg.type==='sys') el.textContent=msg.text;
+  else el.textContent=`${msg.sender}: ${msg.text}`;
+}
+
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const prev=document.getElementById('g-chat-prev');
+  if(prev) prev.addEventListener('click',()=>{ openMod('chat-modal'); scrollChat(); });
+});
+
+
+let tutStep=0;
+const TUT_TOTAL=5;
+
+// Step2用ミニグリッド（スパイマスター視点）
+const TUT_STEP2_TYPES=['spy-red','spy-blue','spy-neutral','spy-red','spy-black',
+                        'spy-blue','spy-red','spy-neutral','spy-blue','spy-red'];
+const TUT_STEP2_WORDS=['ライオン','海','砂漠','剣','影','桜','火山','霧','城','月'];
+
+// Step4用ミニグリッド
+const TUT_STEP4_TYPES=['tc-hidden','tc-hidden','tc-hidden','tc-hidden','tc-hidden'];
+const TUT_STEP4_WORDS=['ライオン','虎','鷹','魚','象'];
+
+function openTutorial() {
+  tutStep=0;
+  renderTutDots();
+  renderTutStep(0);
+  openMod('tutorial-modal');
+  // Step2グリッド生成
+  const g2=document.getElementById('tut-grid-step2');
+  if(g2){
+    g2.innerHTML='';
+    TUT_STEP2_WORDS.forEach((w,i)=>{
+      const d=document.createElement('div');
+      d.className=`tut-card ${TUT_STEP2_TYPES[i]||'spy-neutral'}`;
+      d.textContent=w;
+      // アニメーション：順番に光る
+      setTimeout(()=>d.classList.add('selected-anim'),300+i*120);
+      setTimeout(()=>d.classList.remove('selected-anim'),700+i*120);
+      g2.appendChild(d);
+    });
+  }
+  // Step4グリッド生成
+  const g4=document.getElementById('tut-grid-step4');
+  if(g4){
+    g4.innerHTML='';
+    TUT_STEP4_WORDS.forEach((w,i)=>{
+      const d=document.createElement('div');
+      d.className=`tut-card ${TUT_STEP4_TYPES[i]}`;
+      d.textContent=w;
+      if(i===0) d.classList.add('selected-anim'); // ライオンが選択中
+      g4.appendChild(d);
+    });
+  }
+}
+
+function closeTutorial() {
+  closeMod('tutorial-modal');
+}
+
+function renderTutDots() {
+  const dots=document.getElementById('tut-dots');
+  if(!dots) return;
+  dots.innerHTML='';
+  for(let i=0;i<TUT_TOTAL;i++){
+    const d=document.createElement('div');
+    d.className='tut-step-dot'+(i===tutStep?' active':i<tutStep?' done':'');
+    dots.appendChild(d);
+  }
+}
+
+function renderTutStep(step) {
+  document.querySelectorAll('.tut-step').forEach((el,i)=>{
+    el.classList.remove('active','exit-left');
+    if(i===step) el.classList.add('active');
+    else if(i<step) el.classList.add('exit-left');
+  });
+  // ナビボタン更新
+  const prev=document.getElementById('tut-prev');
+  const next=document.getElementById('tut-next');
+  if(prev) prev.style.opacity=step===0?'0.2':'1';
+  if(next) next.textContent=step===TUT_TOTAL-1?'✓ 完了':'次へ →';
+
+  // Step2アニメ：スパイマスター視点で枠が光る
+  if(step===1){
+    const g2=document.getElementById('tut-grid-step2');
+    if(g2){
+      const cards=g2.querySelectorAll('.tut-card');
+      cards.forEach((d,i)=>{
+        setTimeout(()=>{ d.classList.add('selected-anim'); },200+i*100);
+        setTimeout(()=>{ d.classList.remove('selected-anim'); },600+i*100);
+      });
+    }
+  }
+}
+
+// チュートリアルナビ
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('tut-next')?.addEventListener('click',()=>{
+    if(tutStep>=TUT_TOTAL-1){ closeTutorial(); return; }
+    tutStep++;
+    renderTutDots();
+    renderTutStep(tutStep);
+    beep('tap');
+  });
+  document.getElementById('tut-prev')?.addEventListener('click',()=>{
+    if(tutStep<=0) return;
+    tutStep--;
+    renderTutDots();
+    renderTutStep(tutStep);
+    beep('tap');
+  });
+  // オーバーレイタップで閉じない（誤タップ防止）
+  document.getElementById('tutorial-modal')?.addEventListener('click',(e)=>{
+    if(e.target===e.currentTarget) closeTutorial();
+  });
+  document.getElementById('rules-modal')?.addEventListener('click',(e)=>{
+    if(e.target===e.currentTarget) closeMod('rules-modal');
+  });
+});
+
+
+// ターンバナー表示（スライド＋フラッシュ）
+function showTurnBanner(team) {
+  if(!S.anim) return;
+  const banner = document.getElementById('turn-banner');
+  const inner  = document.getElementById('turn-banner-inner');
+  const title  = document.getElementById('turn-banner-team');
+  const flash  = document.getElementById('turn-flash');
+
+  // チームカラー設定
+  inner.className = `turn-banner-inner ${team}`;
+  title.textContent = team==='red' ? '🔴 RED TEAM' : '🔵 BLUE TEAM';
+
+  // フラッシュ
+  flash.className = '';
+  void flash.offsetWidth;
+  flash.className = `flash-${team}`;
+
+  // バナースライド
+  banner.classList.add('show');
+  inner.style.animation = 'none';
+  void inner.offsetWidth;
+  inner.style.animation = '';
+
+  // 2秒後に消える
+  setTimeout(() => {
+    inner.style.transition = 'opacity .4s ease';
+    inner.style.opacity = '0';
+    setTimeout(() => {
+      banner.classList.remove('show');
+      inner.style.opacity = '';
+      inner.style.transition = '';
+    }, 400);
+  }, 1800);
+}
+
+// ターン終了バナー表示（強制終了・理由付き）
+function showEndTurnBanner(reason) {
+  if(!S.anim) return;
+  const banner = document.getElementById('endturn-banner');
+  const title  = document.getElementById('endturn-banner-title');
+  const sub    = document.getElementById('endturn-banner-sub');
+
+  const msgs = {
+    neutral:  { t:'⚠ ターン終了', s:'中立カードを選びました' },
+    opponent: { t:'⚠ ターン終了', s:'相手チームのカードでした！' },
+    overGuess:{ t:'⚠ ターン終了', s:'推理回数を使い切りました' },
+    wrong:    { t:'⚠ ターン終了', s:'強制ターン終了' },
+  };
+  const m = msgs[reason] || msgs.wrong;
+  title.textContent = m.t;
+  sub.textContent   = m.s;
+
+  banner.classList.remove('show');
+  void banner.offsetWidth;
+  banner.classList.add('show');
+
+  setTimeout(() => {
+    banner.style.transition = 'opacity .4s';
+    banner.style.opacity = '0';
+    setTimeout(() => {
+      banner.classList.remove('show');
+      banner.style.opacity = '';
+      banner.style.transition = '';
+    }, 400);
+  }, 2200);
+}
+
+// カードシェイク（間違えたカードを揺らす）
+function shakeCard(idx) {
+  if(!S.anim) return;
+  const cards = document.querySelectorAll('.crd');
+  const el = cards[idx];
+  if(!el) return;
+  el.classList.remove('shake');
+  void el.offsetWidth;
+  el.classList.add('shake');
+  setTimeout(() => el.classList.remove('shake'), 500);
+}
+
+
+
+// 観戦者かどうか
+function isSpectator() {
+  const me = S.players[S.myId];
+  const role = me?.role || S.myRole;
+  return role === 'spectator';
+}
+
+// 参加/観戦選択ダイアログ（ルーム入室時・ゲーム中）
+let _joinModeResolve = null;
+function showJoinModeDialog() {
+  return new Promise(resolve => {
+    _joinModeResolve = resolve;
+    document.getElementById('join-mode-ov').classList.add('open');
+  });
+}
+
+// 参加選択ポップアップ（チーム/役割）
+let _jpTeam = null, _jpRole = null;
+function openJoinPopup() {
+  _jpTeam = null; _jpRole = null;
+  document.querySelectorAll('.join-popup-team-btn, .join-popup-role-btn').forEach(b => b.classList.remove('sel'));
+  document.getElementById('jp-confirm').disabled = true;
+  document.getElementById('join-popup-ov').classList.add('open');
+}
+function closeJoinPopup() {
+  document.getElementById('join-popup-ov').classList.remove('open');
+}
+
+// g-join-bar の表示制御
+function updateJoinBar() {
+  const bar = document.getElementById('g-join-bar');
+  if (!bar) return;
+  const me = S.players[S.myId];
+  const role = me?.role || S.myRole;
+  const isSpec = role === 'spectator' || !role;
+  const solo = Object.values(S.players).filter(p=>p.online!==false).length<=1;
+  const isSpy = role === 'spymaster';
+  const specBtn = document.getElementById('btn-spec-view');
+  const joinBtn = document.getElementById('btn-game-join');
+  const specWatchBtn = document.getElementById('btn-game-spec');
+
+  // 1人プレイ：バー非表示
+  if (solo) { bar.style.display = 'none'; return; }
+
+  if (isSpec) {
+    // 観戦中：「色を見る」トグル（観戦者のみ）＋「参加する」
+    bar.style.display = 'flex';
+    specBtn.style.display = 'block';
+    joinBtn.style.display = 'block';
+    joinBtn.textContent = '🙋 参加する';
+    joinBtn.className = 'g-join-btn ghost';
+    specWatchBtn.style.display = 'none';
+    const canSee = S.specCanSeeColors !== false;
+    specBtn.classList.toggle('active', canSee);
+    specBtn.textContent = canSee ? '👁 色が見える' : '👁 色を隠す';
+  } else {
+    // 参加中（スパイマスター・オペレーター）：「観戦する」のみ、「色を見る」は非表示
+    bar.style.display = 'flex';
+    specBtn.style.display = 'none'; // スパイマスターも含め非表示
+    joinBtn.style.display = 'none';
+    specWatchBtn.style.display = 'block';
+    specWatchBtn.textContent = '👀 観戦する';
+    specWatchBtn.className = 'g-join-btn ghost';
+  }
+}
+
+// 観戦者の色表示トグル
+function bindJoinBar() {
+  // 色見るトグル
+  document.getElementById('btn-spec-view')?.addEventListener('click', () => {
+    S.specCanSeeColors = !(S.specCanSeeColors !== false);
+    updateJoinBar();
+    updateGameUI();
+    beep('tap');
+  });
+
+  // 参加するボタン（観戦→参加 or 役割変更）
+  document.getElementById('btn-game-join')?.addEventListener('click', () => {
+    openJoinPopup();
+    beep('tap');
+  });
+
+  // 観戦する → 確認ポップアップ
+  document.getElementById('btn-game-spec')?.addEventListener('click', () => {
+    beep('tap');
+    document.getElementById('spec-confirm-ov').classList.add('open');
+  });
+
+  // 参加ポップアップ：チーム選択
+  document.getElementById('jp-red')?.addEventListener('click', () => {
+    _jpTeam = 'red';
+    document.getElementById('jp-red').classList.add('sel');
+    document.getElementById('jp-blue').classList.remove('sel');
+    checkJpConfirm();
+    beep('tap');
+  });
+  document.getElementById('jp-blue')?.addEventListener('click', () => {
+    _jpTeam = 'blue';
+    document.getElementById('jp-blue').classList.add('sel');
+    document.getElementById('jp-red').classList.remove('sel');
+    checkJpConfirm();
+    beep('tap');
+  });
+
+  // 参加ポップアップ：役割選択
+  document.getElementById('jp-spy')?.addEventListener('click', () => {
+    _jpRole = 'spymaster';
+    document.getElementById('jp-spy').classList.add('sel');
+    document.getElementById('jp-op').classList.remove('sel');
+    checkJpConfirm();
+    beep('tap');
+  });
+  document.getElementById('jp-op')?.addEventListener('click', () => {
+    _jpRole = 'operative';
+    document.getElementById('jp-op').classList.add('sel');
+    document.getElementById('jp-spy').classList.remove('sel');
+    checkJpConfirm();
+    beep('tap');
+  });
+
+  // 確定ボタン
+  document.getElementById('jp-confirm')?.addEventListener('click', async () => {
+    if (!_jpTeam || !_jpRole) return;
+    closeJoinPopup();
+    S.myTeam = _jpTeam; S.myRole = _jpRole;
+    if (firebaseReady && S.roomId) {
+      await db.ref(`rooms/${S.roomId}/players/${S.myId}`).update({ team: _jpTeam, role: _jpRole, online: true });
+    } else if (S.players[S.myId]) {
+      S.players[S.myId].team = _jpTeam;
+      S.players[S.myId].role = _jpRole;
+    }
+    updateJoinBar(); updateGameUI(); beep('tap');
+    toast(`${_jpTeam === 'red' ? '🔴 Red' : '🔵 Blue'} ${_jpRole === 'spymaster' ? 'Spymaster' : 'Operative'} として参加！`, 'ok');
+  });
+
+  document.getElementById('jp-cancel')?.addEventListener('click', () => {
+    closeJoinPopup(); beep('tap');
+  });
+  // 観戦切替確認ポップアップ
+  document.getElementById('spec-confirm-yes')?.addEventListener('click', async () => {
+    document.getElementById('spec-confirm-ov').classList.remove('open');
+    S.myRole='spectator'; S.myTeam=null; S.specCanSeeColors=false;
+    if(firebaseReady&&S.roomId) await db.ref(`rooms/${S.roomId}/players/${S.myId}`).update({role:'spectator',team:null});
+    else if(S.players[S.myId]){S.players[S.myId].role='spectator';S.players[S.myId].team=null;}
+    updateJoinBar(); updateGameUI(); beep('tap');
+    toast('👀 観戦モードに切り替えました');
+  });
+  document.getElementById('spec-confirm-no')?.addEventListener('click', () => {
+    document.getElementById('spec-confirm-ov').classList.remove('open'); beep('tap');
+  });
+  document.getElementById('spec-confirm-ov')?.addEventListener('click', e => {
+    if(e.target===e.currentTarget){ document.getElementById('spec-confirm-ov').classList.remove('open'); }
+  });
+  document.getElementById('join-popup-ov')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeJoinPopup();
+  });
+
+  // 参加/観戦選択ダイアログ
+  document.getElementById('jm-join')?.addEventListener('click', () => {
+    document.getElementById('join-mode-ov').classList.remove('open');
+    if (_joinModeResolve) { _joinModeResolve('join'); _joinModeResolve = null; }
+  });
+  document.getElementById('jm-spec')?.addEventListener('click', () => {
+    document.getElementById('join-mode-ov').classList.remove('open');
+    if (_joinModeResolve) { _joinModeResolve('spec'); _joinModeResolve = null; }
+  });
+  document.getElementById('jm-cancel')?.addEventListener('click', () => {
+    document.getElementById('join-mode-ov').classList.remove('open');
+    if (_joinModeResolve) { _joinModeResolve('cancel'); _joinModeResolve = null; }
+  });
+}
+
+function checkJpConfirm() {
+  const btn = document.getElementById('jp-confirm');
+  if (btn) btn.disabled = !(_jpTeam && _jpRole);
+}
+
+function updateCfgRoleBtns() {
+  ['cfg-team-red','cfg-team-blue'].forEach(id=>{
+    const b=document.getElementById(id); if(!b) return;
+    const t=id.includes('red')?'red':'blue';
+    b.classList.toggle('sel',_cfgTeam===t);
+  });
+  ['cfg-role-spy','cfg-role-op'].forEach(id=>{
+    const b=document.getElementById(id); if(!b) return;
+    const r=id.includes('spy')?'spymaster':'operative';
+    b.classList.toggle('sel',_cfgRole===r);
+  });
+  const save=document.getElementById('cfg-role-save');
+  if(save) save.disabled=!(_cfgTeam&&_cfgRole);
+}
+
+
+function updatePlayersBar() {
+  const redEl = document.getElementById('g-players-red');
+  const blueEl = document.getElementById('g-players-blue');
+  if (!redEl || !blueEl) return;
+
+  // S.playersが空の場合も自分のデータを確実に含める
+  let players = {...S.players};
+  if (!players[S.myId]) {
+    players[S.myId] = {id:S.myId, name:S.nick, online:true};
+  }
+  // ローカル状態で補完（Firebaseに書き込まれていない場合も対応）
+  const ps = Object.values(players).map(p => ({
+    ...p,
+    team: p.id===S.myId ? (p.team||S.myTeam) : p.team,
+    role: p.id===S.myId ? (p.role||S.myRole) : p.role,
+    name: p.name||p.id,
+  }));
+
+  const makeRow = (p, dimmed=false, large=false) => {
+    const row = document.createElement('div');
+    row.className = 'g-player-row';
+    const online = p.online !== false;
+    const nameStyle = dimmed ? 'color:rgba(255,255,255,.5)' : 'color:#fff';
+    const fontSize = large ? 'font-size:11px;font-weight:700' : 'font-size:10px';
+    const hostBadge = p.host ? '<span style="font-family:var(--font);font-size:7px;background:rgba(255,255,255,.2);color:#fff;padding:1px 4px;border-radius:3px;letter-spacing:.5px;margin-right:2px">HOST</span>' : '';
+    row.innerHTML = `
+      <div class="g-player-dot ${online?'on':'off'}"></div>
+      ${hostBadge}<span class="g-player-name" style="${nameStyle};${fontSize}">${p.name}</span>
+    `;
+    return row;
+  };
+
+  const makeDivider = () => {
+    const d = document.createElement('div');
+    d.style.cssText = 'height:1px;background:rgba(255,255,255,.15);margin:4px 0 3px;';
+    return d;
+  };
+
+  const makeLbl = (text) => {
+    const l = document.createElement('div');
+    l.style.cssText = 'font-family:var(--font);font-size:7px;letter-spacing:1.5px;color:rgba(255,255,255,.5);text-transform:uppercase;margin-bottom:2px;';
+    l.textContent = text;
+    return l;
+  };
+
+  const renderCol = (el, team) => {
+    const ttl = el.querySelector('.g-players-col-ttl');
+    el.innerHTML = '';
+    if (ttl) el.appendChild(ttl);
+
+    const spies = ps.filter(p => p.team===team && p.role==='spymaster');
+    const ops   = ps.filter(p => p.team===team && p.role==='operative');
+    const others= ps.filter(p => p.team===team && p.role!=='spymaster' && p.role!=='operative' && p.role!=='spectator');
+
+    // Spymaster（上段・大きめ）
+    if (spies.length > 0) {
+      el.appendChild(makeLbl('👁 SPY'));
+      spies.forEach(p => el.appendChild(makeRow(p, false, true)));
+    } else {
+      el.appendChild(makeLbl('👁 SPY'));
+      const empty = document.createElement('div');
+      empty.style.cssText = 'font-size:9px;color:rgba(255,255,255,.25);font-family:var(--fontj);padding:1px 0;';
+      empty.textContent = '未設定';
+      el.appendChild(empty);
+    }
+
+    // 区切り線
+    el.appendChild(makeDivider());
+
+    // Operatives（下段）
+    el.appendChild(makeLbl('🕵 OP'));
+    if (ops.length > 0) {
+      ops.forEach(p => el.appendChild(makeRow(p)));
+    } else {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'font-size:9px;color:rgba(255,255,255,.25);font-family:var(--fontj);padding:1px 0;';
+      empty.textContent = '未設定';
+      el.appendChild(empty);
+    }
+
+    // 役割未設定
+    others.forEach(p => el.appendChild(makeRow(p, true)));
+  };
+
+  renderCol(redEl, 'red');
+  renderCol(blueEl, 'blue');
+
+  // 観戦者（spectatorのみ）を青列下部に追加
+  const specs = ps.filter(p => p.role==='spectator');
+  if (specs.length > 0) {
+    const lbl = document.createElement('div');
+    lbl.style.cssText='font-family:var(--font);font-size:7px;letter-spacing:1px;color:rgba(255,255,255,.25);text-transform:uppercase;margin-top:5px;';
+    lbl.textContent='👀 観戦';
+    blueEl.appendChild(lbl);
+    specs.forEach(p => blueEl.appendChild(makeRow(p, true)));
+  }
+}
+
+/* ==============================
+   起動
+   ============================== */
+function init() {
+  const saved=localStorage.getItem('cn_nick');
+  if(saved) { S.nick=saved; document.getElementById('nick-in').value=saved; }
+  S.myId=localStorage.getItem('cn_id')||uid();
+  localStorage.setItem('cn_id',S.myId);
+
+  if(firebaseReady) {
+    db.ref('.info/connected').on('value',snap=>{
+      const on=snap.val();
+      const d=document.getElementById('conn-dot');
+      const t=document.getElementById('conn-txt');
+      if(d) d.className=on?'on':'off';
+      if(t) t.textContent=on?'Online':'Offline';
+    });
+  }
+
+  bindTitle();
+  bindCreate();
+  bindJoin();
+  bindRooms();
+  bindLobby();
+  bindGame();
+  bindResult();
+  bindModals();
+
+  setTimeout(()=>showScreen('screen-title'),700);
+}
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
