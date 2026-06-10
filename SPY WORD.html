@@ -13,10 +13,10 @@
 :root{--red:#c0392b;--red-light:#e74c3c;--red-dark:#922b21;--red-bg:rgba(192,57,43,0.18);--red-border:rgba(192,57,43,0.5);--blue:#2471a3;--blue-light:#2980b9;--blue-dark:#1a5276;--blue-bg:rgba(36,113,163,0.18);--blue-border:rgba(36,113,163,0.5);--card-face:#e8dfc0;--card-bd:#c4b483;--neutral:#a89060;--assassin:#1c1c1c;--bg:#1a1a2e;--panel:#16213e;--surface:#0f3460;--text:#e0ddd4;--text-dim:#7a8a9a;--gold:#e2a800;--app-w:390px;--r:6px;--font:'Impact','Arial Narrow',Arial,sans-serif;--fontj:-apple-system,'Helvetica Neue',Arial,sans-serif;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;outline:none;}
 select{touch-action:auto;user-select:auto;-webkit-user-select:auto;}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;overscroll-behavior:none;}
-body{display:flex;align-items:center;justify-content:center;font-family:var(--fontj);}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a1a2e;overscroll-behavior:none;}
+body{display:flex;align-items:center;justify-content:center;font-family:var(--fontj);padding-bottom:env(safe-area-inset-bottom,0px);}
 input,textarea{user-select:auto;-webkit-user-select:auto;touch-action:auto;font-size:16px !important;}
-#app{width:var(--app-w);height:100vh;max-height:900px;position:relative;overflow:hidden;background:var(--bg);}
+#app{width:var(--app-w);height:calc(100vh - 60px);max-height:840px;position:relative;overflow:hidden;background:var(--bg);}
 .screen{position:absolute;inset:0;display:none;flex-direction:column;opacity:0;transition:opacity .2s;}
 .screen.active{display:flex;opacity:1;}
 .btn{min-height:48px;border:none;border-radius:var(--r);font-family:var(--font);font-size:15px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:0 16px;transition:filter .12s,transform .1s;position:relative;overflow:hidden;}
@@ -535,6 +535,30 @@ to{opacity:1;transform:translateX(-50%) translateY(0);}
 .g-player-role-badge.spy{background:rgba(255,255,255,.25);color:#fff;}
 .g-player-role-badge.op{background:rgba(255,255,255,.15);color:#fff;}
 .g-player-role-badge.spec{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);}
+
+/* ── 結果画面のカードグリッド ── */
+.res-grid-ttl {
+  font-family:var(--font); font-size:10px; letter-spacing:2px;
+  text-transform:uppercase; color:var(--text-dim);
+  text-align:center; margin:14px 0 8px;
+}
+.res-grid {
+  display:grid; grid-template-columns:repeat(5,1fr);
+  gap:3px; width:100%; padding:0 12px;
+  margin-bottom:14px;
+}
+.res-card {
+  aspect-ratio:1.6/1; border-radius:4px;
+  display:flex; align-items:center; justify-content:center;
+  padding:2px 3px; text-align:center;
+  font-family:var(--font); font-size:clamp(7px,2vw,10px);
+  font-weight:600; letter-spacing:.3px; text-transform:uppercase;
+  line-height:1.15; word-break:break-word;
+}
+.res-card.r-red   { background:var(--red);     color:#fff; border:2px solid var(--red-dark); }
+.res-card.r-blue  { background:var(--blue);    color:#fff; border:2px solid var(--blue-dark); }
+.res-card.r-neut  { background:var(--neutral); color:rgba(50,28,0,.7); border:2px solid #7a6840; }
+.res-card.r-ass   { background:#111;           color:rgba(255,255,255,.5); border:2px solid #000; }
 </style>
 </head>
 <body>
@@ -827,6 +851,8 @@ to{opacity:1;transform:translateX(-50%) translateY(0);}
       <div class="res-srow"><span class="res-slbl">経過時間</span><span class="res-sval" id="stat-time">-</span></div>
       <div class="res-srow"><span class="res-slbl">ターン数</span><span class="res-sval" id="stat-turns">-</span></div>
     </div>
+    <div class="res-grid-ttl">🗺 カード配置（答え合わせ）</div>
+    <div class="res-grid" id="res-grid"></div>
   </div>
   <div class="res-foot">
     <button class="btn btn-gold" id="btn-again">▶ もう一度遊ぶ</button>
@@ -1203,6 +1229,13 @@ const FB_CONFIG = {
   appId: "1:000000000000:web:placeholder"
 };
 let db=null, firebaseReady=false;
+// Firebase設定が未設定の場合はオフラインモードで起動
+const _fbConfigured = FB_CONFIG.apiKey && !FB_CONFIG.apiKey.includes('PLACEHOLDER');
+if(!_fbConfigured) {
+  console.log('Firebase未設定：オフラインモードで起動');
+  // オフラインモードで初期化完了扱い
+  setTimeout(()=>{ document.getElementById('screen-loading').classList.remove('active'); document.getElementById('screen-title').classList.add('active'); },500);
+} else
 try {
   if(typeof firebase === 'undefined') throw new Error('Firebase not loaded');
   firebase.initializeApp(FB_CONFIG);
@@ -1441,7 +1474,7 @@ function makeStepper(pfx,set,mn,mx,step,init) {
 }
 function secToDisp(s){
   const m=Math.floor(s/60), sec=s%60;
-  return m>0 ? `${m}<span style="font-size:10px">分</span>${sec>0?sec+'<span style="font-size:10px">秒</span>':''}` : `${sec}<span style="font-size:10px">秒</span>`;
+  return m>0 ? `${m}<span style="font-size:10px">分</span>${sec>0?sec:''}` : `${sec}`;
 }
 function makeTimeStepper() {
   const el=document.getElementById('tm-v');
@@ -2525,6 +2558,19 @@ function showResult() {
   document.getElementById('stat-turns').textContent=`${g.turnCount||0}回`;
   showScreen('screen-result');
   beep('win'); spawnConfetti();
+
+  // カードの答え合わせグリッド
+  const grid = document.getElementById('res-grid');
+  if(grid && g.cards){
+    grid.innerHTML = '';
+    g.cards.forEach(card=>{
+      const tClass = card.type==='red'?'r-red': card.type==='blue'?'r-blue': card.type==='neutral'?'r-neut':'r-ass';
+      const div = document.createElement('div');
+      div.className = `res-card ${tClass}`;
+      div.textContent = card.word;
+      grid.appendChild(div);
+    });
+  }
 }
 
 function bindResult() {
@@ -2590,6 +2636,10 @@ const TUT_STEP2_WORDS=['ライオン','海','砂漠','剣','影','桜','火山',
 // Step4用ミニグリッド
 const TUT_STEP4_TYPES=['tc-hidden','tc-hidden','tc-hidden','tc-hidden','tc-hidden'];
 const TUT_STEP4_WORDS=['ライオン','虎','鷹','魚','象'];
+
+function openRules() {
+  openMod('rules-modal');
+}
 
 function openTutorial() {
   tutStep=0;
