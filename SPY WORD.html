@@ -514,7 +514,7 @@ to{opacity:1;transform:translateX(-50%) translateY(0);}
 .g-gear{width:28px !important;height:28px !important;font-size:13px !important;}
 .room-player-cnt{font-family:var(--font);font-size:10px;color:var(--text-dim);display:flex;align-items:center;gap:4px;}
 .room-player-cnt em{color:var(--text);font-style:normal;font-weight:600;}
-.g-players-bar{flex-shrink:0;display:flex;gap:0;background:#07111c;border-top:1px solid rgba(255,255,255,.05);}
+.g-players-bar{flex-shrink:0;display:flex;gap:0;background:#07111c;border-top:1px solid rgba(255,255,255,.05);min-height:110px;}
 .g-players-col{flex:1;padding:5px 8px 6px;display:flex;flex-direction:column;gap:3px;overflow:hidden;}
 .g-players-col.red-col{background:var(--red);border-right:1px solid rgba(0,0,0,.2);}
 .g-players-col.blue-col{background:var(--blue);}
@@ -1233,8 +1233,7 @@ let db=null, firebaseReady=false;
 const _fbConfigured = FB_CONFIG.apiKey && !FB_CONFIG.apiKey.includes('PLACEHOLDER');
 if(!_fbConfigured) {
   console.log('Firebase未設定：オフラインモードで起動');
-  // オフラインモードで初期化完了扱い
-  setTimeout(()=>{ document.getElementById('screen-loading').classList.remove('active'); document.getElementById('screen-title').classList.add('active'); },500);
+  // initに画面遷移を任せる
 } else
 try {
   if(typeof firebase === 'undefined') throw new Error('Firebase not loaded');
