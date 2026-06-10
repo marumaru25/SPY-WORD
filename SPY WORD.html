@@ -560,18 +560,6 @@ to{opacity:1;transform:translateX(-50%) translateY(0);}
 .res-card.r-neut  { background:var(--neutral); color:rgba(50,28,0,.7); border:2px solid #7a6840; }
 .res-card.r-ass   { background:#111;           color:rgba(255,255,255,.5); border:2px solid #000; }
 
-/* ── 常時退室ボタン ── */
-#btn-leave-fixed {
-  position:fixed; bottom:80px; right:10px; z-index:9000;
-  width:40px; height:40px; border-radius:50%;
-  background:rgba(0,0,0,.6); border:1px solid rgba(255,255,255,.2);
-  color:rgba(255,255,255,.7); font-size:14px; font-family:var(--font);
-  font-weight:600; letter-spacing:.5px;
-  cursor:pointer; display:none; align-items:center; justify-content:center;
-  transition:all .15s; backdrop-filter:blur(4px);
-}
-#btn-leave-fixed.show { display:flex; }
-#btn-leave-fixed:active { transform:scale(.9); background:rgba(192,57,43,.4); }
 </style>
 </head>
 <body>
@@ -793,6 +781,7 @@ to{opacity:1;transform:translateX(-50%) translateY(0);}
   <div class="g-rolebar">
     <div class="g-role" id="g-role">---</div>
     <div class="g-typing" id="g-typing"></div>
+    <button id="btn-leave-game" style="height:22px;padding:0 8px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);font-family:var(--font);font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;flex-shrink:0;white-space:nowrap;">退室</button>
   </div>
   <div class="g-grid-wrap">
     <div class="g-grid" id="g-grid"></div>
@@ -874,7 +863,17 @@ to{opacity:1;transform:translateX(-50%) translateY(0);}
 </div>
 
 </div><!-- #app -->
-<button id="btn-leave-fixed">出</button>
+
+<!-- 退室確認ポップアップ -->
+<div class="join-popup-ov" id="leave-confirm-ov">
+  <div class="join-popup" style="text-align:center">
+    <div style="font-size:26px;margin-bottom:8px">🚪</div>
+    <div class="join-popup-title">退室しますか？</div>
+    <div style="font-size:12px;color:var(--text-dim);font-family:var(--fontj);margin-bottom:18px">ゲームから退室します</div>
+    <button class="join-popup-confirm" id="leave-confirm-yes" style="background:rgba(192,57,43,.8);margin-bottom:8px">退室する</button>
+    <button class="join-popup-cancel" id="leave-confirm-no">キャンセル</button>
+  </div>
+</div>
 
 <!-- 観戦切替確認ポップアップ -->
 <div class="join-popup-ov" id="spec-confirm-ov">
@@ -1354,7 +1353,7 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s=>{ s.classList.remove('active'); s.style.display='none'; });
   const t=document.getElementById(id);
   if(t){ t.style.display='flex'; requestAnimationFrame(()=>t.classList.add('active')); }
-  console.log('→',id);
+
 }
 
 function fmtSec(s) { const m=Math.floor(s/60); return `${m}:${String(s%60).padStart(2,'0')}`; }
@@ -1486,7 +1485,7 @@ function makeStepper(pfx,set,mn,mx,step,init) {
 }
 function secToDisp(s){
   const m=Math.floor(s/60), sec=s%60;
-  return m>0 ? `${m}<span style="font-size:10px">分</span>${sec>0?sec:''}` : `${sec}`;
+  return m>0 ? `${m}<span style="font-size:10px">分</span>${sec>0?sec+'<span style="font-size:10px">秒</span>':''}` : `${sec}<span style="font-size:10px">秒</span>`;
 }
 function makeTimeStepper() {
   const el=document.getElementById('tm-v');
@@ -2422,7 +2421,12 @@ function doEndTurn(g, reason='wrong') {
 }
 
 function bindGame() {
-  bindJoinBar(); // 観戦/参加バーのイベント
+  bindJoinBar();
+  // 退室ボタン
+  document.getElementById('btn-leave-game')?.addEventListener('click',()=>{
+    beep('tap');
+    document.getElementById('leave-confirm-ov').classList.add('open');
+  });
   // 役割切替ボタン（1人プレイ専用）
   const swMap={'sw-spy-red':{team:'red',role:'spymaster'},'sw-op-red':{team:'red',role:'operative'},'sw-spy-blue':{team:'blue',role:'spymaster'},'sw-op-blue':{team:'blue',role:'operative'}};
   Object.entries(swMap).forEach(([id,{team,role}])=>{
@@ -2643,15 +2647,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.getElementById(id)?.addEventListener('click',()=>openTutorial());
   });
 
-  // 常時退室ボタン
-  document.getElementById('btn-leave-fixed')?.addEventListener('click',async()=>{
-    beep('tap');
-    if(currentScreen()==='screen-game'){
-      if(confirm('ゲームを退室しますか？')) await leaveRoom();
-    } else {
-      await leaveRoom();
-    }
-  });
 });
 
 
@@ -3005,6 +3000,17 @@ function bindJoinBar() {
   });
   document.getElementById('spec-confirm-ov')?.addEventListener('click', e => {
     if(e.target===e.currentTarget){ document.getElementById('spec-confirm-ov').classList.remove('open'); }
+  });
+  // 退室確認ポップアップ
+  document.getElementById('leave-confirm-yes')?.addEventListener('click',()=>{
+    document.getElementById('leave-confirm-ov').classList.remove('open');
+    leaveRoom();
+  });
+  document.getElementById('leave-confirm-no')?.addEventListener('click',()=>{
+    document.getElementById('leave-confirm-ov').classList.remove('open'); beep('tap');
+  });
+  document.getElementById('leave-confirm-ov')?.addEventListener('click',e=>{
+    if(e.target===e.currentTarget) document.getElementById('leave-confirm-ov').classList.remove('open');
   });
   document.getElementById('join-popup-ov')?.addEventListener('click', e => {
     if (e.target === e.currentTarget) closeJoinPopup();
