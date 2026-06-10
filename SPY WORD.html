@@ -624,8 +624,8 @@ to{opacity:1;transform:translateX(-50%) translateY(0);}
       <button class="btn btn-ghost btn-sm" id="btn-public">🌐 公開ルームを探す</button>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:8px">
-      <button class="help-btn rules-btn" onclick="openRules()">📖 ルール</button>
-      <button class="help-btn tut-btn"   onclick="openTutorial()">🎓 チュートリアル</button>
+      <button class="help-btn rules-btn" id="btn-rules-title">📖 ルール</button>
+      <button class="help-btn tut-btn" id="btn-tut-title">🎓 チュートリアル</button>
     </div>
   </div>
 </div>
@@ -728,8 +728,8 @@ to{opacity:1;transform:translateX(-50%) translateY(0);}
       <button class="copy-btn" id="copy-rid">コピー</button>
     </div>
     <div style="display:flex;gap:6px;align-items:center">
-      <button class="help-btn rules-btn" onclick="openRules()" style="height:28px;font-size:9px">📖</button>
-      <button class="help-btn tut-btn"   onclick="openTutorial()" style="height:28px;font-size:9px">🎓</button>
+      <button class="help-btn rules-btn" id="btn-rules-lobby" style="height:28px;font-size:9px">📖</button>
+      <button class="help-btn tut-btn" id="btn-tut-lobby" style="height:28px;font-size:9px">🎓</button>
       <button class="gear-btn" id="lobby-gear">⚙</button>
     </div>
   </div>
@@ -780,8 +780,8 @@ to{opacity:1;transform:translateX(-50%) translateY(0);}
       <div class="g-timer" id="g-timer">--:--</div>
       <div style="display:flex;gap:4px;align-items:center;justify-content:center">
         <button class="g-gear" id="g-gear" style="width:30px;height:30px;font-size:13px">⚙</button>
-        <button class="g-gear" onclick="openRules()" style="width:30px;height:30px;font-size:13px">📖</button>
-        <button class="g-gear" onclick="openTutorial()" style="width:30px;height:30px;font-size:13px">🎓</button>
+        <button class="g-gear" id="btn-rules-game" style="width:30px;height:30px;font-size:13px">📖</button>
+        <button class="g-gear" id="btn-tut-game" style="width:30px;height:30px;font-size:13px">🎓</button>
       </div>
     </div>
     <div class="sc-block blue" id="sc-blue">
@@ -2633,6 +2633,15 @@ function updateGameChatPreview(msg) {
 document.addEventListener('DOMContentLoaded',()=>{
   const prev=document.getElementById('g-chat-prev');
   if(prev) prev.addEventListener('click',()=>{ openMod('chat-modal'); scrollChat(); });
+
+  // ルール・チュートリアルボタン（全画面）
+  ['btn-rules-title','btn-rules-lobby','btn-rules-game'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('click',()=>openMod('rules-modal'));
+  });
+  ['btn-tut-title','btn-tut-lobby','btn-tut-game'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('click',()=>openTutorial());
+  });
+
   // 常時退室ボタン
   document.getElementById('btn-leave-fixed')?.addEventListener('click',()=>{
     beep('tap');
