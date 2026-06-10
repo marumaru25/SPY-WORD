@@ -562,10 +562,11 @@ to{opacity:1;transform:translateX(-50%) translateY(0);}
 
 /* ── 常時退室ボタン ── */
 #btn-leave-fixed {
-  position:fixed; top:8px; left:8px; z-index:9000;
-  width:36px; height:36px; border-radius:50%;
-  background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.15);
-  color:rgba(255,255,255,.6); font-size:16px;
+  position:fixed; bottom:80px; right:10px; z-index:9000;
+  width:40px; height:40px; border-radius:50%;
+  background:rgba(0,0,0,.6); border:1px solid rgba(255,255,255,.2);
+  color:rgba(255,255,255,.7); font-size:14px; font-family:var(--font);
+  font-weight:600; letter-spacing:.5px;
   cursor:pointer; display:none; align-items:center; justify-content:center;
   transition:all .15s; backdrop-filter:blur(4px);
 }
@@ -873,7 +874,7 @@ to{opacity:1;transform:translateX(-50%) translateY(0);}
 </div>
 
 </div><!-- #app -->
-<button id="btn-leave-fixed" title="退室">←</button>
+<button id="btn-leave-fixed">出</button>
 
 <!-- 観戦切替確認ポップアップ -->
 <div class="join-popup-ov" id="spec-confirm-ov">
@@ -2643,13 +2644,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
 
   // 常時退室ボタン
-  document.getElementById('btn-leave-fixed')?.addEventListener('click',()=>{
+  document.getElementById('btn-leave-fixed')?.addEventListener('click',async()=>{
     beep('tap');
     if(currentScreen()==='screen-game'){
-      // ゲーム中は確認ポップアップ
-      if(confirm('ゲームを退室しますか？')) leaveRoom();
+      if(confirm('ゲームを退室しますか？')) await leaveRoom();
     } else {
-      leaveRoom();
+      await leaveRoom();
     }
   });
 });
