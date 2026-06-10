@@ -627,7 +627,6 @@ to{opacity:1;transform:translateX(-50%) translateY(0);}
       <button class="help-btn rules-btn" onclick="openRules()">📖 ルール</button>
       <button class="help-btn tut-btn"   onclick="openTutorial()">🎓 チュートリアル</button>
     </div>
-    <div class="title-foot">SPY WORD · Firebase Online</div>
   </div>
 </div>
 
@@ -2662,6 +2661,8 @@ const TUT_STEP4_WORDS=['ライオン','虎','鷹','魚','象'];
 function openRules() {
   openMod('rules-modal');
 }
+window.openRules = openRules;
+window.openTutorial = openTutorial;
 
 function openTutorial() {
   tutStep=0;
