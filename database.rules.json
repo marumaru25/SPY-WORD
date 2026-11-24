@@ -1,0 +1,177 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "lobbies": {
+      ".read": "query.orderByChild === 'at' && query.limitToLast <= 30",
+      ".indexOn": ["at"],
+      "$rid": {
+        ".write": "!newData.exists() || root.child('rooms').child($rid).child('settings').exists()",
+        ".validate": "$rid.matches(/^[1-9][0-9]{3}$/) && newData.hasChildren(['hostName','count','max','status','at'])",
+        "hostName": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 12" },
+        "count":    { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 16 && newData.val() % 1 === 0" },
+        "max":      { ".validate": "newData.isNumber() && newData.val() >= 4 && newData.val() <= 16 && newData.val() % 1 === 0" },
+        "status":   { ".validate": "newData.val() === 'waiting' || newData.val() === 'playing' || newData.val() === 'ended'" },
+        "at":       { ".validate": "newData.isNumber() && newData.val() <= now" },
+        "$other":   { ".validate": false }
+      }
+    },
+
+    "rooms": {
+      "$rid": {
+        ".read": true,
+        ".write": "(!data.exists() && newData.child('settings').exists()) || (data.exists() && !newData.exists() && (!data.child('players').exists() || (data.child('settings/activeAt').isNumber() && data.child('settings/activeAt').val() < now - 10800000) || (!data.child('settings/activeAt').exists() && data.child('settings/createdAt').isNumber() && data.child('settings/createdAt').val() < now - 86400000)))",
+        ".validate": "$rid.matches(/^[1-9][0-9]{3}$/) && newData.hasChildren(['settings'])",
+
+        "settings": {
+          ".write": "newData.exists()",
+          ".validate": "newData.hasChildren(['max','time','status','hostId'])",
+          "max":       { ".validate": "newData.isNumber() && newData.val() >= 4 && newData.val() <= 16 && newData.val() % 1 === 0" },
+          "min":       { ".validate": "newData.isNumber() && newData.val() >= 2 && newData.val() <= 16 && newData.val() % 1 === 0" },
+          "time":      { ".validate": "newData.isNumber() && newData.val() >= 30 && newData.val() <= 300 && newData.val() % 1 === 0" },
+          "pub":       { ".validate": "newData.isBoolean()" },
+          "hostId":    { ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9]{6,40}$/)" },
+          "hostName":  { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 12" },
+          "status":    { ".validate": "newData.val() === 'waiting' || newData.val() === 'playing' || newData.val() === 'ended'" },
+          "createdAt": { ".validate": "newData.isNumber()" },
+          "activeAt":  { ".validate": "newData.isNumber() && newData.val() <= now" },
+          "customWords": {
+            "$w": { ".validate": "$w.matches(/^[0-9]$/) && newData.isString() && newData.val().length >= 1 && newData.val().length <= 12" }
+          },
+          "$other": { ".validate": false }
+        },
+
+        "players": {
+          "$pid": {
+            ".write": true,
+            ".validate": "$pid.matches(/^[A-Za-z0-9]{6,40}$/) && newData.hasChildren(['id','name']) && newData.child('id').val() === $pid",
+            "id":       { ".validate": "newData.isString()" },
+            "name":     { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 12" },
+            "team":     { ".validate": "newData.val() === 'red' || newData.val() === 'blue'" },
+            "role":     { ".validate": "newData.val() === 'spymaster' || newData.val() === 'operative' || newData.val() === 'spectator'" },
+            "ready":    { ".validate": "newData.isBoolean()" },
+            "host":     { ".validate": "newData.isBoolean()" },
+            "online":   { ".validate": "newData.isBoolean()" },
+            "joinedAt": { ".validate": "newData.isNumber()" },
+            "$other":   { ".validate": false }
+          }
+        },
+
+        "key": {
+          ".write": true,
+          ".validate": "newData.hasChildren(['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24']) && (!data.exists() || data.parent().child('game/startedAt').val() !== newData.parent().child('game/startedAt').val())",
+          "$i": { ".validate": "$i.matches(/^(1?[0-9]|2[0-4])$/) && (newData.val() === 'red' || newData.val() === 'blue' || newData.val() === 'neutral' || newData.val() === 'assassin')" }
+        },
+
+        "game": {
+          ".write": true,
+          ".validate": "newData.hasChildren(['cards','firstTeam','currentTeam','phase','startedAt','turnCount','turnStartAt','redRemaining','blueRemaining']) && ((newData.child('phase').val() === 'ended') === newData.hasChild('winner')) && (newData.child('phase').val() !== 'ended' || newData.hasChildren(['winReason','endedAt'])) && (newData.child('winReason').val() !== 'allFound' || (newData.child('winner').val() === 'red' && newData.child('redRemaining').val() === 0) || (newData.child('winner').val() === 'blue' && newData.child('blueRemaining').val() === 0)) && (newData.child('winReason').val() !== 'assassin' || (newData.child('lastReveal/type').val() === 'assassin' && newData.child('lastReveal/team').val() !== newData.child('winner').val())) && (newData.child('phase').val() !== 'guess' || newData.hasChild('currentHint')) && (newData.child('phase').val() !== 'hint' || !newData.hasChild('currentHint')) && (((!data.exists() || data.child('phase').val() === 'ended') && data.child('startedAt').val() !== newData.child('startedAt').val() && newData.child('phase').val() === 'hint' && newData.child('turnCount').val() === 0 && newData.child('turnStartAt').val() === newData.child('startedAt').val() && newData.child('startedAt').val() >= now - 120000 && newData.child('startedAt').val() <= now + 30000 && newData.child('currentTeam').val() === newData.child('firstTeam').val() && !newData.hasChild('hints') && !newData.hasChild('lastReveal') && !newData.hasChild('lastEnd') && newData.parent().child('key').exists() && ((newData.child('firstTeam').val() === 'red' && newData.child('redRemaining').val() === 9 && newData.child('blueRemaining').val() === 8) || (newData.child('firstTeam').val() === 'blue' && newData.child('blueRemaining').val() === 9 && newData.child('redRemaining').val() === 8))) || (data.exists() && data.child('startedAt').val() === newData.child('startedAt').val() && newData.child('firstTeam').val() === data.child('firstTeam').val() && (newData.child('turnCount').val() === data.child('turnCount').val() || newData.child('turnCount').val() === data.child('turnCount').val() + 1) && ((newData.child('currentTeam').val() === data.child('currentTeam').val()) === (newData.child('turnCount').val() === data.child('turnCount').val())) && ((newData.child('turnStartAt').val() === data.child('turnStartAt').val()) === (newData.child('turnCount').val() === data.child('turnCount').val())) && (newData.child('turnCount').val() === data.child('turnCount').val() || (newData.child('turnStartAt').val() >= now - 120000 && newData.child('turnStartAt').val() <= now + 30000)) && ((data.child('phase').val() === 'hint' && ((newData.child('phase').val() === 'guess' && newData.child('turnCount').val() === data.child('turnCount').val()) || (newData.child('phase').val() === 'hint' && newData.child('turnCount').val() !== data.child('turnCount').val()))) || (data.child('phase').val() === 'guess' && ((newData.child('phase').val() !== 'hint') === (newData.child('turnCount').val() === data.child('turnCount').val()))) || (data.child('phase').val() === 'ended' && newData.child('phase').val() === 'ended' && newData.child('turnCount').val() === data.child('turnCount').val() && newData.child('winner').val() === data.child('winner').val())) && (newData.child('redRemaining').val() === data.child('redRemaining').val() || (newData.child('redRemaining').val() === data.child('redRemaining').val() - 1 && newData.child('lastReveal/type').val() === 'red' && newData.child('lastReveal/at').val() !== data.child('lastReveal/at').val())) && (newData.child('blueRemaining').val() === data.child('blueRemaining').val() || (newData.child('blueRemaining').val() === data.child('blueRemaining').val() - 1 && newData.child('lastReveal/type').val() === 'blue' && newData.child('lastReveal/at').val() !== data.child('lastReveal/at').val()))))",
+
+          "cards": {
+            ".validate": "newData.hasChildren(['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23','24'])",
+            "$i": {
+              ".validate": "$i.matches(/^(1?[0-9]|2[0-4])$/) && newData.hasChildren(['word','revealed']) && ((newData.child('revealed').val() === false && !newData.hasChild('type')) || (newData.child('revealed').val() === true && newData.child('type').val() === newData.parent().parent().parent().child('key').child($i).val())) && ((data.parent().parent().child('startedAt').val() !== newData.parent().parent().child('startedAt').val() && newData.child('revealed').val() === false) || (data.parent().parent().child('startedAt').val() === newData.parent().parent().child('startedAt').val() && newData.child('word').val() === data.child('word').val() && (data.child('revealed').val() !== true || (newData.child('revealed').val() === true && newData.child('type').val() === data.child('type').val())) && (data.child('revealed').val() === true || newData.child('revealed').val() === false || data.parent().parent().child('phase').val() === 'guess')))",
+              "word":     { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 12" },
+              "revealed": { ".validate": "newData.isBoolean()" },
+              "type":     { ".validate": "newData.val() === 'red' || newData.val() === 'blue' || newData.val() === 'neutral' || newData.val() === 'assassin'" },
+              "by":       { ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9]{6,40}$/)" },
+              "byName":   { ".validate": "newData.isString() && newData.val().length <= 12" },
+              "$other":   { ".validate": false }
+            }
+          },
+          "firstTeam":   { ".validate": "newData.val() === 'red' || newData.val() === 'blue'" },
+          "currentTeam": { ".validate": "newData.val() === 'red' || newData.val() === 'blue'" },
+          "phase":       { ".validate": "newData.val() === 'hint' || newData.val() === 'guess' || newData.val() === 'ended'" },
+          "currentHint": {
+            ".validate": "newData.hasChildren(['word','count','displayCount'])",
+            "word":         { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20" },
+            "count":        { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 9 && newData.val() % 1 === 0" },
+            "displayCount": { ".validate": "newData.isString() && newData.val().length <= 2" },
+            "$other":       { ".validate": false }
+          },
+          "guessesLeft":     { ".validate": "newData.isNumber() && newData.val() >= -1 && newData.val() <= 10 && newData.val() % 1 === 0" },
+          "guessedThisTurn": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 25 && newData.val() % 1 === 0" },
+          "redRemaining":    { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 9 && newData.val() % 1 === 0" },
+          "blueRemaining":   { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 9 && newData.val() % 1 === 0" },
+          "winner":          { ".validate": "newData.val() === 'red' || newData.val() === 'blue'" },
+          "winReason":       { ".validate": "newData.val() === 'allFound' || newData.val() === 'assassin'" },
+          "hints": {
+            "$h": {
+              ".validate": "$h.matches(/^1?[0-9]{1,2}$/) && newData.hasChildren(['team','word','count'])",
+              "team":   { ".validate": "newData.val() === 'red' || newData.val() === 'blue'" },
+              "word":   { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20" },
+              "count":  { ".validate": "newData.isString() && newData.val().length <= 2" },
+              "res":    { ".validate": "newData.isString() && newData.val().length <= 25 && newData.val().matches(/^[rbna]*$/)" },
+              "$other": { ".validate": false }
+            }
+          },
+          "solo":        { ".validate": "newData.isBoolean() && (data.parent().child('startedAt').val() !== newData.parent().child('startedAt').val() || !data.exists() || newData.val() === data.val())" },
+          "startedAt":   { ".validate": "newData.isNumber()" },
+          "turnCount":   { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 2000 && newData.val() % 1 === 0" },
+          "turnStartAt": { ".validate": "newData.isNumber()" },
+          "endedAt":     { ".validate": "newData.isNumber()" },
+          "lastEnd": {
+            ".validate": "newData.hasChildren(['reason','team','at'])",
+            "reason": { ".validate": "newData.val() === 'timer' || newData.val() === 'manual' || newData.val() === 'overGuess' || newData.val() === 'neutral' || newData.val() === 'opponent'" },
+            "team":   { ".validate": "newData.val() === 'red' || newData.val() === 'blue'" },
+            "at":     { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          },
+          "lastReveal": {
+            ".validate": "newData.hasChildren(['idx','type','team','at'])",
+            "idx":    { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 24 && newData.val() % 1 === 0" },
+            "type":   { ".validate": "newData.val() === 'red' || newData.val() === 'blue' || newData.val() === 'neutral' || newData.val() === 'assassin'" },
+            "team":   { ".validate": "newData.val() === 'red' || newData.val() === 'blue'" },
+            "at":     { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          },
+          "$other": { ".validate": false }
+        },
+
+        "selections": {
+          ".write": "!newData.exists()",
+          "$pid": {
+            ".write": true,
+            ".validate": "$pid.matches(/^[A-Za-z0-9]{6,40}$/) && newData.hasChildren(['idxs']) && newData.parent().parent().child('players').child($pid).exists()",
+            "idxs": {
+              "$k": { ".validate": "$k.matches(/^(1?[0-9]|2[0-4])$/) && newData.isNumber() && newData.val() >= 0 && newData.val() <= 24 && newData.val() % 1 === 0" }
+            },
+            "name":   { ".validate": "newData.isString() && newData.val().length <= 12" },
+            "team":   { ".validate": "newData.val() === 'red' || newData.val() === 'blue'" },
+            "at":     { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+
+        "typing": {
+          "$pid": {
+            ".write": true,
+            ".validate": "$pid.matches(/^[A-Za-z0-9]{6,40}$/) && newData.hasChildren(['typing','at']) && newData.parent().parent().child('players').child($pid).exists()",
+            "typing": { ".validate": "newData.isBoolean()" },
+            "at":     { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+
+        "chat": {
+          "$mid": {
+            ".write": "!data.exists() || !newData.exists()",
+            ".validate": "$mid.matches(/^[-_0-9A-Za-z]{20}$/) && newData.hasChildren(['type','text','at']) && ((newData.child('type').val() === 'chat' && newData.child('text').val().length <= 60 && newData.child('sid').isString() && newData.child('sender').isString() && newData.parent().parent().child('players').child(newData.child('sid').val()).child('name').val() === newData.child('sender').val()) || (newData.child('type').val() === 'sys' && newData.child('text').val().length <= 80))",
+            "type":   { ".validate": "newData.val() === 'chat' || newData.val() === 'sys'" },
+            "text":   { ".validate": "newData.isString() && newData.val().length >= 1" },
+            "sender": { ".validate": "newData.isString() && newData.val().length <= 12" },
+            "sid":    { ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9]{6,40}$/)" },
+            "ev":     { ".validate": "newData.val() === 'join' || newData.val() === 'spec' || newData.val() === 'kick' || newData.val() === 'takeSpy' || newData.val() === 'host'" },
+            "name":   { ".validate": "newData.isString() && newData.val().length <= 12" },
+            "team":   { ".validate": "newData.val() === 'red' || newData.val() === 'blue'" },
+            "at":     { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}
